@@ -1,0 +1,20 @@
+# 前端相关
+collabInsight-frontend/node_modules/
+collabInsight-frontend/dist/
+collabInsight-frontend/.env
+collabInsight-frontend/.env.local
+collabInsight-frontend/.vscode/
+collabInsight-frontend/npm-debug.log*
+
+# 后端相关
+collabInsight-server/node_modules/
+collabInsight-server/dist/
+collabInsight-server/.env
+collabInsight-server/.env.local
+collabInsight-server/.vscode/
+collabInsight-server/npm-debug.log*
+
+# 通用
+.DS_Store
+*.log
+.idea/
