@@ -9,7 +9,7 @@ import './index.css'; // Tailwind 基础样式
 // 自定义 Ant Design 主题
 const antdTheme = {
   token: {
-    colorPrimary: '#1890ff',
+    colorPrimary: '#6C70E6',
   },
 };
 
