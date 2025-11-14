@@ -1,62 +1,56 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import React from 'react';
 
-// 导入页面组件（注意：如果组件是默认导出，需用 import Home from 'xxx'；命名导出用 import { Home } from 'xxx'）
-import { Home } from '@/views/home/Home';
-import { Login } from '@/views/login/Login';
-import { TaskCenter } from '@/views/center/TaskCenter';
-import { Message } from '@/views/message/Message';
-import { Bug } from '@/views/bug/Bug';
-import { NotFound } from '@/views/otherPage/NotFound';
+import { lazy } from 'react';
 
-// 路由规则：修复语法错误 + 优化逻辑
+const Home = lazy(() => import('@/views/home/Home').then((mod) => ({ default: mod.Home })));
+const Login = lazy(() => import('@/views/login/Login').then((mod) => ({ default: mod.Login })));
+const Register = lazy(() => import('@/views/register/Register').then((mod) => ({ default: mod.Register })));
+const TaskCenter = lazy(() =>
+  import('@/views/center/TaskCenter').then((mod) => ({ default: mod.TaskCenter }))
+);
+const Message = lazy(() =>
+  import('@/views/message/Message').then((mod) => ({ default: mod.Message }))
+);
+const Bug = lazy(() => import('@/views/bug/Bug').then((mod) => ({ default: mod.Bug })));
+const NotFound = lazy(() =>
+  import('@/views/otherPage/NotFound').then((mod) => ({ default: mod.NotFound }))
+);
 export const routes = [
-  // 1. 登录页（公开路由，无嵌套子路由）
   {
     path: '/login',
     element: <Login />,
     meta: { title: '登录页' },
   },
+  {
+    path: '/register',
+    element: <Register />,
+    meta: { title: '注册页' },
+  },
 
-  // 2. 主路由（登录后访问，嵌套子路由）
   {
     path: '/',
-    element: <Home />, // 根路径默认显示首页（替代之前的 Login 作为根元素）
+    element: <Home />,
     meta: { title: '首页' },
     children: [
-      // 子路由：路径无需加 "/"，自动拼接父路径（如 "task-center" → "/task-center"）
       {
-        path: 'task-center', // 规范路径：小写+中划线（替代大写 /TASKCENTER）
+        path: 'task-center',
         element: <TaskCenter />,
         meta: { title: '任务中心' },
       },
       {
-        path: 'message', // 规范路径：小写（替代大写 /MESSAGE）
+        path: 'message',
         element: <Message />,
         meta: { title: '消息中心' },
       },
       {
-        path: 'bug', // 规范路径：小写（替代大写 /BUG）
+        path: 'bug',
         element: <Bug />,
         meta: { title: 'Bug管理' },
-      },
-      // 重定向：兼容旧的大写路径（如 /TASKCENTER → /task-center）
-      {
-        path: 'TASKCENTER',
-        element: <Navigate to="task-center" replace />,
-      },
-      {
-        path: 'MESSAGE',
-        element: <Navigate to="message" replace />,
-      },
-      {
-        path: 'BUG',
-        element: <Navigate to="bug" replace />,
       },
     ],
   },
 
-  // 3. 404页面（匹配所有未定义路由）
   {
     path: '*',
     element: <NotFound />,

@@ -1,7 +1,5 @@
-import React from 'react'
+import React from 'react';
 
 export const Message = () => {
-  return (
-    <div>Message</div>
-  )
-}
+  return <div>Message</div>;
+};
