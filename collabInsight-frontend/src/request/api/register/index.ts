@@ -1,5 +1,5 @@
 import { http } from '@/utils/http';
-import type { LoginResponse } from '@/api/login/type';
+import type { LoginResponse } from '@/request/api/login/type';
 
 export interface RegisterParams {
   username: string;

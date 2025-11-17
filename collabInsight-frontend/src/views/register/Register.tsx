@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Input, Card, message } from 'antd';
 import FormItem from 'antd/es/form/FormItem';
-import { register } from '@/api/register';
-import type { RegisterParams } from '@/api/register';
-import type { LoginParams } from '@/api/login/type';
+import { register } from '@/request/api/register';
+import type { RegisterParams } from '@/request/api/register';
+import type { LoginParams } from '@/request/api/login/type';
 
 export const Register = () => {
   const [RegisterFrom] = Form.useForm<RegisterParams>();
@@ -39,7 +39,10 @@ export const Register = () => {
           <FormItem<LoginParams & { email: string }> name="email">
             <Input placeholder="请输入邮箱" size="large" />
           </FormItem>
-          <FormItem<LoginParams & { email: string }> name="password" rules={[{ message: '请输入密码' }]}>
+          <FormItem<LoginParams & { email: string }>
+            name="password"
+            rules={[{ message: '请输入密码' }]}
+          >
             <Input.Password placeholder="请输入密码" size="large" />
           </FormItem>
           <FormItem>
@@ -58,7 +61,9 @@ export const Register = () => {
         </Form>
 
         <div className="justify-center item-center  mt-3 flex">
-          <Button type="link" onClick={() => navigate('/login')}>返回登录</Button>
+          <Button type="link" onClick={() => navigate('/login')}>
+            返回登录
+          </Button>
         </div>
       </Card>
     </div>

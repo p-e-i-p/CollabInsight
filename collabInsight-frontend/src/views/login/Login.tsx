@@ -1,5 +1,5 @@
-import { login } from '@/api/login';
-import type { LoginParams } from '@/api/login/type';
+import { login } from '@/request/api/login';
+import type { LoginParams } from '@/request/api/login/type';
 import auth from '@/utils/http';
 import { Form, Button, Input, Card } from 'antd';
 import FormItem from 'antd/es/form/FormItem';
@@ -55,7 +55,9 @@ export const Login = () => {
           <Button type="link" className="color-indigo-500">
             忘记密码
           </Button>
-          <Button type="link" onClick={() => navigate('/register')}>注册新账号</Button>
+          <Button type="link" onClick={() => navigate('/register')}>
+            注册新账号
+          </Button>
         </div>
       </Card>
       {/* 注册 */}

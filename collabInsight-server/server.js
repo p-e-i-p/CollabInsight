@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 // 路由
-app.use('/api/login', userRoutes);
+app.use('/api', userRoutes);
 app.use('/api/userInfo', userRoutes);
 app.use('/api/register', registerRoutes);
 

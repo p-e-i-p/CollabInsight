@@ -10,7 +10,7 @@ import axios, {
 // ========================= 1. 扩展 Axios 类型 =========================
 declare module 'axios' {
   interface AxiosRequestConfig<D = any> {
-    showSuccessToast?: boolean; 
+    showSuccessToast?: boolean;
     headers?: AxiosRequestHeaders;
     needLoading?: boolean;
   }
@@ -26,7 +26,8 @@ const auth = {
 
 // ========================= 3. 创建 Axios 实例 =========================
 const service: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL,
+  // 把 VITE_BASE_URL 改成 VITE_API_BASE_URL（和 .env 一致）
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json;charset=utf-8',
@@ -80,8 +81,8 @@ type RequestOptions<T = any> = {
   method: Method;
   data?: T;
   params?: Record<string, any>;
-  showSuccessToast?: boolean; 
-  needLoading?: boolean; 
+  showSuccessToast?: boolean;
+  needLoading?: boolean;
   headers?: AxiosRequestHeaders;
 };
 
