@@ -1,5 +1,5 @@
 import { http } from '@/utils/http';
-import { type LoginResponse, type LoginParams } from './type';
+import { type LoginResponse, type LoginParams } from '@/request/type';
 export const login = (params: LoginParams) => {
   return http.post<LoginResponse>('/login', params, {
     showSuccessToast: true,

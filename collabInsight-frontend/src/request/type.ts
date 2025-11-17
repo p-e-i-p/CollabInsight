@@ -8,10 +8,15 @@ export type LoginResponse = {
   userInfo: {
     _id: number;
     username: string;
-    role: 'admin'|'user';
+    role: 'admin' | 'user';
   };
 };
 
 export type LoginError = {
   message: string;
+};
+export interface RegisterParams {
+  username: string;
+  email: string;
+  password: string;
 }
