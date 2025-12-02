@@ -13,6 +13,7 @@ const Message = lazy(() =>
   import('@/views/message/Message').then((mod) => ({ default: mod.Message }))
 );
 const Bug = lazy(() => import('@/views/bug/Bug').then((mod) => ({ default: mod.Bug })));
+const Profile = lazy(() => import('@/views/profile/Profile').then((mod) => ({ default: mod.Profile })));
 const NotFound = lazy(() =>
   import('@/views/otherPage/NotFound').then((mod) => ({ default: mod.NotFound }))
 );
@@ -48,6 +49,13 @@ export const routes = [
         element: <Bug />,
         meta: { title: 'Bug管理' },
       },
+      ,
+      {
+        path: 'profile',
+        element: <Profile />,
+        meta: { title: '个人中心' },
+      },
+      
     ],
   },
 
