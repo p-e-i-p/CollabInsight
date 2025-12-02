@@ -70,4 +70,48 @@ router.get('/userInfo', protect, async (req, res) => {
   }
 });
 
+// @desc    修改用户密码
+// @route   POST /change-password
+// @access  私有
+router.post('/change-password', protect, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    
+    // 检查是否提供了旧密码和新密码
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: '请提供旧密码和新密码' });
+    }
+    
+    // 检查新密码长度是否符合要求
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: '新密码长度至少为6位' });
+    }
+    
+    // 查找当前用户
+    const user = await User.findById(req.user.id).select('+password');
+    
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+    
+    // 验证旧密码是否正确
+    const isMatch = await user.matchPassword(oldPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: '旧密码错误' });
+    }
+    
+    // 更新密码
+    user.password = newPassword;
+    await user.save();
+    
+    res.status(200).json({
+      code: 200,
+      message: '密码修改成功'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: '服务器错误' });
+  }
+});
+
 module.exports = router;

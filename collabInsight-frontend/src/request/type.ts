@@ -20,3 +20,8 @@ export interface RegisterParams {
   email: string;
   password: string;
 }
+
+export interface ChangePasswordParams {
+  oldPassword: string;
+  newPassword: string;
+}
