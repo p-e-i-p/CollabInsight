@@ -5,3 +5,5 @@ export const register = (params: RegisterParams) => {
     showSuccessToast: true,
   });
 };
+export type { RegisterParams };
+

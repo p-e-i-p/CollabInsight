@@ -4,7 +4,7 @@ import { Form, Button, Input, Card, message } from 'antd';
 import FormItem from 'antd/es/form/FormItem';
 import { register } from '@/request/api/register';
 import type { RegisterParams } from '@/request/api/register';
-import type { LoginParams } from '@/request/api/login/type';
+import type { LoginParams } from '@/request/type';
 
 export const Register = () => {
   const [RegisterFrom] = Form.useForm<RegisterParams>();
