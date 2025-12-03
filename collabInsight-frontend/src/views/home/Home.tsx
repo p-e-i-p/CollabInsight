@@ -7,10 +7,11 @@ import {
   type MenuProps,
   Dropdown,
   Avatar,
-  Modal,
   Form,
   Input,
   message,
+  Button,
+  Card,
 } from 'antd';
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
@@ -31,7 +32,7 @@ const { Header, Content, Sider } = Layout;
 export const Home: React.FC = () => {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState<string>('');
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [showPasswordCard, setShowPasswordCard] = useState<boolean>(false);
   const [form] = Form.useForm();
 
   // 实时时间更新
@@ -66,12 +67,10 @@ export const Home: React.FC = () => {
   // 处理下拉菜单点击
   const handleDropdownClick = ({ key }: { key: string }) => {
     if (key === 'logout') {
-      localStorage.removeItem('token'); 
-      navigate('/login'); 
+      localStorage.removeItem('token');
+      navigate('/login');
     } else if (key === 'change-password') {
-    
-      setIsModalVisible(true);
-    
+      setShowPasswordCard(true);
     }
   };
 
@@ -94,7 +93,7 @@ export const Home: React.FC = () => {
   // 取消修改密码
   const handleCancel = () => {
     form.resetFields();
-    setIsModalVisible(false);
+    setShowPasswordCard(false);
   };
 
   // 处理头像点击
@@ -162,74 +161,63 @@ export const Home: React.FC = () => {
           </div>
         </Content>
       </Layout>
-      {/* 修改密码弹框 */}
-      <Modal
-        title="修改密码"
-        open={isModalVisible}
-        onCancel={handleCancel}
-        footer={null}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handlePasswordChange}
-        >
-          <Form.Item
-            label="旧密码"
-            name="oldPassword"
-            rules={[
-              { required: true, message: '请输入旧密码' },
-            ]}
-          >
-            <Input.Password placeholder="请输入旧密码" />
-          </Form.Item>
-          <Form.Item
-            label="新密码"
-            name="newPassword"
-            rules={[
-              { required: true, message: '请输入新密码' },
-              { min: 6, message: '密码长度至少为6位' },
-            ]}
-          >
-            <Input.Password placeholder="请输入新密码" />
-          </Form.Item>
-          <Form.Item
-            label="确认新密码"
-            name="confirmPassword"
-            dependencies={['newPassword']}
-            rules={[
-              { required: true, message: '请确认新密码' },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (!value || getFieldValue('newPassword') === value) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error('两次输入的密码不一致'));
-                },
-              }),
-            ]}
-          >
-            <Input.Password placeholder="请再次输入新密码" />
-          </Form.Item>
-          <Form.Item>
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+
+      {/* 修改密码表单弹窗 */}
+      {showPasswordCard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+          <Card className=" col-span-1  text-center  shadow-xl rounded-lg border-2 backdrop-blur-sm bg-white/95 max-w-[90vw] w-[370px] h-[450px] ">
+            <Form form={form} onFinish={handlePasswordChange}>
+              <div className="text-xl pb-4 my-3">修改密码</div>
+              <Form.Item name="oldPassword" rules={[{ required: true, message: '请输入旧密码' }]}>
+                <Input.Password placeholder="请输入原密码" size="large" />
+              </Form.Item>
+              <Form.Item
+                name="newPassword"
+                rules={[
+                  { required: true, message: '请输入新密码' },
+                  { min: 6, message: '密码长度至少为6位' },
+                ]}
               >
-                取消
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                <Input.Password placeholder="请输入新密码" size="large" />
+              </Form.Item>
+              <Form.Item
+                name="confirmPassword"
+                dependencies={['newPassword']}
+                rules={[
+                  { required: true, message: '请确认新密码' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue('newPassword') === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('两次输入的密码不一致'));
+                    },
+                  }),
+                ]}
               >
-                确认修改
-              </button>
-            </div>
-          </Form.Item>
-        </Form>
-      </Modal>
+                <Input.Password placeholder="请确认新密码" size="large" />
+              </Form.Item>
+              <Form.Item>
+                <div className="flex flex-col space-y-3 mt-6">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    autoInsertSpace
+                    block
+                    size="large"
+                    loading={false}
+                  >
+                    确认
+                  </Button>
+                  <Button type="default" onClick={handleCancel} block size="large">
+                    取消
+                  </Button>
+                </div>
+              </Form.Item>
+            </Form>
+          </Card>
+        </div>
+      )}
     </Layout>
   );
 };

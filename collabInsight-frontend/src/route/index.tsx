@@ -7,7 +7,9 @@ import auth from '@/utils/http';
 
 const Home = lazy(() => import('@/views/home/Home').then((mod) => ({ default: mod.Home })));
 const Login = lazy(() => import('@/views/login/Login').then((mod) => ({ default: mod.Login })));
-const Register = lazy(() => import('@/views/register/Register').then((mod) => ({ default: mod.Register })));
+const Register = lazy(() =>
+  import('@/views/register/Register').then((mod) => ({ default: mod.Register }))
+);
 const TaskCenter = lazy(() =>
   import('@/views/center/TaskCenter').then((mod) => ({ default: mod.TaskCenter }))
 );
@@ -15,7 +17,9 @@ const Message = lazy(() =>
   import('@/views/message/Message').then((mod) => ({ default: mod.Message }))
 );
 const Bug = lazy(() => import('@/views/bug/Bug').then((mod) => ({ default: mod.Bug })));
-const Profile = lazy(() => import('@/views/profile/Profile').then((mod) => ({ default: mod.Profile })));
+const Profile = lazy(() =>
+  import('@/views/profile/Profile').then((mod) => ({ default: mod.default }))
+);
 const NotFound = lazy(() =>
   import('@/views/otherPage/NotFound').then((mod) => ({ default: mod.NotFound }))
 );
@@ -33,31 +37,50 @@ export const routes = [
 
   {
     path: '/',
-    element: <AuthGuard><Home /></AuthGuard>,
+    element: (
+      <AuthGuard>
+        <Home />
+      </AuthGuard>
+    ),
     meta: { title: '首页' },
     children: [
       {
         path: 'task-center',
-        element: <AuthGuard><TaskCenter /></AuthGuard>,
+        element: (
+          <AuthGuard>
+            <TaskCenter />
+          </AuthGuard>
+        ),
         meta: { title: '任务中心' },
       },
       {
         path: 'message',
-        element: <AuthGuard><Message /></AuthGuard>,
+        element: (
+          <AuthGuard>
+            <Message />
+          </AuthGuard>
+        ),
         meta: { title: '消息中心' },
       },
       {
         path: 'bug',
-        element: <AuthGuard><Bug /></AuthGuard>,
+        element: (
+          <AuthGuard>
+            <Bug />
+          </AuthGuard>
+        ),
         meta: { title: 'Bug管理' },
       },
       ,
       {
         path: 'profile',
-        element: <AuthGuard><Profile /></AuthGuard>,
+        element: (
+          <AuthGuard>
+            <Profile />
+          </AuthGuard>
+        ),
         meta: { title: '个人中心' },
       },
-      
     ],
   },
 
@@ -66,8 +89,6 @@ export const routes = [
     element: <NotFound />,
     meta: { title: '页面未找到' },
   },
-
-
 ];
 
 // 创建路由实例
