@@ -18,9 +18,9 @@ export const Register = () => {
       const res = await register(values);
       message.success('注册成功，请登录');
       navigate('/login');
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
-      message.error('注册失败，请重试');
+      // 错误消息由HTTP拦截器处理，这里不需要重复显示
     } finally {
       setloading(false);
     }

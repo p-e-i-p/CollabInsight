@@ -69,8 +69,13 @@ service.interceptors.response.use(
       return res.data;
     }
   },
-  (error) => {
-    message.error(error.message || '服务器错误，请联系管理员');
+  (error: any) => {
+    // 如果服务器返回了错误信息，优先显示服务器返回的错误信息
+    if (error.response && error.response.data && error.response.data.message) {
+      message.error(error.response.data.message);
+    } else {
+      message.error(error.message || '服务器错误，请联系管理员');
+    }
     return Promise.reject(error);
   }
 );
