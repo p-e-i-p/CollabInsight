@@ -1,7 +1,6 @@
 import {
   Breadcrumb,
   Layout,
-  Menu,
   theme,
   type BreadcrumbProps,
   type MenuProps,
@@ -12,8 +11,9 @@ import {
   message,
   Button,
   Card,
+  Menu,
 } from 'antd';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Outlet } from 'react-router-dom';
 import {
   FrownFilled,
@@ -25,15 +25,55 @@ import {
 } from '@ant-design/icons';
 import { menuItems } from './menu';
 import { changePassword } from '@/request/api/changePassword';
+import { getUserProfile } from '@/request/api/user/profile';
+import ProfileCard from '@/Components/ProfileCard';
+import { eventBus, Events } from '@/utils/eventBus';
 import type { ChangePasswordParams } from '@/request/type';
-import { useNavigate } from 'react-router-dom';
+export { HomeContext };
 const { Header, Content, Sider } = Layout;
 
+// 创建HomeContext
+const HomeContext = createContext({
+  setShowProfileCard: (show: boolean) => {}
+});
+
 export const Home: React.FC = () => {
-  const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState<string>('');
   const [showPasswordCard, setShowPasswordCard] = useState<boolean>(false);
+  const [showProfileCard, setShowProfileCard] = useState<boolean>(false);
   const [form] = Form.useForm();
+  const [userAvatar, setUserAvatar] = useState<string>('');
+  
+  // 获取用户头像信息
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const profile = await getUserProfile();
+        setUserAvatar(profile.avatar ? (profile.avatar.startsWith('http') ? profile.avatar : `http://localhost:3000${profile.avatar}`) : '');
+      } catch (error) {
+        console.error('获取用户头像失败', error);
+      }
+    };
+
+    fetchUserProfile();
+    
+    // 监听头像更新事件
+    const handleAvatarUpdated = (avatarUrl: string) => {
+      setUserAvatar(avatarUrl ? (avatarUrl.startsWith('http') ? avatarUrl : `http://localhost:3000${avatarUrl}`) : '');
+    };
+    
+    eventBus.on(Events.USER_AVATAR_UPDATED, handleAvatarUpdated);
+    
+    // 清理函数
+    return () => {
+      eventBus.off(Events.USER_AVATAR_UPDATED, handleAvatarUpdated);
+    };
+  }, []);
+  
+  // 更新用户头像的函数
+  const updateUserAvatar = (avatarUrl: string) => {
+    setUserAvatar(avatarUrl ? `http://localhost:3000${avatarUrl}` : '');
+  };
 
   // 实时时间更新
   useEffect(() => {
@@ -61,14 +101,14 @@ export const Home: React.FC = () => {
 
   const handelMenuClick: MenuProps['onClick'] = ({ key }) => {
     const path = key === '/' ? key : `/${key}`;
-    return navigate(path);
+    return window.location.href = path;
   };
 
   // 处理下拉菜单点击
   const handleDropdownClick = ({ key }: { key: string }) => {
     if (key === 'logout') {
       localStorage.removeItem('token');
-      navigate('/login');
+      window.location.href = '/login';
     } else if (key === 'change-password') {
       setShowPasswordCard(true);
     }
@@ -80,7 +120,7 @@ export const Home: React.FC = () => {
       await changePassword(values);
       message.success('密码修改成功，请重新登录');
       localStorage.removeItem('token');
-      navigate('/login');
+      window.location.href = '/login';
     } catch (error: any) {
       if (error.response && error.response.data && error.response.data.message) {
         message.error(error.response.data.message);
@@ -98,14 +138,36 @@ export const Home: React.FC = () => {
 
   // 处理头像点击
   const handleAvatarClick = () => {
-    // 跳转到个人中心页面
-    navigate('/profile');
+    // 显示个人中心卡片
+    setShowProfileCard(true);
+  };
+
+  // 提供HomeContext给子组件
+  const contextValue = {
+    setShowProfileCard
+  };
+
+  // 关闭个人中心卡片
+  const closeProfileCard = () => {
+    setShowProfileCard(false);
+    // 重新获取用户信息并更新头像
+    const fetchUserProfile = async () => {
+      try {
+        const profile = await getUserProfile();
+        setUserAvatar(profile.avatar ? `http://localhost:3000${profile.avatar}` : '');
+      } catch (error) {
+        console.error('重新获取用户头像失败', error);
+      }
+    };
+
+    fetchUserProfile();
   };
 
   return (
-    <Layout className="h-screen overflow-hidden flex flex-col h-full">
+    <HomeContext.Provider value={contextValue}>
+      <Layout className="h-screen overflow-hidden flex flex-col h-full">
       <Sider width={250} theme="light" className="m-5 rounded-xl w-20000 ">
-        <div className="flex items-center justify-center mb-1 p-5" onClick={() => navigate('/')}>
+        <div className="flex items-center justify-center mb-1 p-5" onClick={() => window.location.href = '/'}>
           <FrownFilled className=" text-3xl mr-3" />
           <span className="font-bold font-serif text-xl ">CollabInsight</span>
         </div>
@@ -123,6 +185,7 @@ export const Home: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="text-gray-600 mr-4 font-medium text-lg">{currentTime}</div>
             <Avatar
+              src={userAvatar}
               icon={<UserOutlined />}
               size={'large'}
               className=" transition-all duration-300 hover:scale-110"
@@ -218,6 +281,12 @@ export const Home: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {/* 个人中心卡片 */}
+      {showProfileCard && (
+        <ProfileCard onClose={closeProfileCard} />
+      )}
     </Layout>
+    </HomeContext.Provider>
   );
 };

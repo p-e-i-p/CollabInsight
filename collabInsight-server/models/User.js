@@ -34,6 +34,27 @@ const UserSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  // 个人信息相关字段
+  nickname: {
+    type: String,
+    default: function() {
+      return this.username + 'aaa';
+    }
+  },
+  avatar: {
+    type: String,
+    default: ''
+  },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other'],
+    default: 'other'
+  },
+  bio: {
+    type: String,
+    maxlength: 200,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now

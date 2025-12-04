@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');
 require('dotenv').config();
 
 // 数据库连接
@@ -20,6 +21,9 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+
+// 静态文件服务
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 路由
 app.use('/api', userRoutes);
