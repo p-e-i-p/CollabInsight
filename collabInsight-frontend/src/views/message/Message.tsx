@@ -1,6 +1,7 @@
+import React from 'react';
 import BaseTable, { type FilterFormValues } from '@/Components/BaseTable';
 import { DatePicker, Input, Select, Space } from 'antd';
-import React from 'react';
+
 // 定义接口类型
 interface User {
   id: string;
@@ -10,7 +11,7 @@ interface User {
   status: 'active' | 'inactive';
 }
 
-export const Message = () => {
+const Message: React.FC = () => {
   // 定义表格数据类型
   interface User {
     id: string;
@@ -28,7 +29,7 @@ export const Message = () => {
     createTime?: [string, string]; // 时间范围过滤
   }
 
-  const ExamplePage: React.FC = () => {
+  // 定义表格数据类型
     // 模拟数据获取函数（整合分页+过滤参数）
     const fetchUserList = async (params: {
       page: number;
@@ -127,23 +128,22 @@ export const Message = () => {
       },
     ];
     return (
-      <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">用户管理</h1>
-        <BaseTable<User, UserFilterFormValues>
-          fetcher={fetchUserList}
-          columns={columns}
-          rowKey="id"
-          loadingText="加载用户列表..."
-          emptyText="暂无用户数据"
-          className="shadow-md rounded-lg"
-          // 过滤相关配置
-          filterFormItems={filterFormItems}
-          filterFormLayout="horizontal"
-          showFilterButton={true}
-          defaultFilterVisible={false}
-          initialParams={{ status: '' }} // 初始过滤参数
-        />
-      </div>
-    );
-  };
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">消息中心</h1>
+      <BaseTable<User, UserFilterFormValues>
+        fetcher={fetchUserList}
+        columns={columns}
+        rowKey="id"
+        loadingText="加载消息列表..."
+        emptyText="暂无消息数据"
+        className="shadow-md rounded-lg"
+        // 过滤相关配置
+        filterFormItems={filterFormItems}
+        filterFormLayout="horizontal"
+        showFilterButton={true}
+        defaultFilterVisible={false}
+        initialParams={{ status: '' }} // 初始过滤参数
+      />
+    </div>
+  );
 };

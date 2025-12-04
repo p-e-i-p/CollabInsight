@@ -1,9 +1,7 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
-import React from 'react';
+import { createBrowserRouter } from 'react-router-dom';
 
 import { lazy } from 'react';
 import { AuthGuard } from '@/utils/authGuard';
-import auth from '@/utils/http';
 
 const Home = lazy(() => import('@/views/home/Home').then((mod) => ({ default: mod.Home })));
 const Login = lazy(() => import('@/views/login/Login').then((mod) => ({ default: mod.Login })));

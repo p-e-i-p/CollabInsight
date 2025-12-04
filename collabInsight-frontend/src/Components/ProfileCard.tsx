@@ -3,11 +3,43 @@ import { Card, Avatar, Form, Input, Radio, Button, message, Upload, Modal, Spin 
 import { UserOutlined, UploadOutlined, CameraOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import { getUserProfile, updateUserProfile, uploadAvatar } from '@/request/api/user/profile';
-import type { UpdateProfileParams } from '@/request/type';
+import type { UpdateProfileParams, FormItemLayoutProps } from '@/request/type';
 import { HomeContext } from '@/views/home/Home';
 import { eventBus, Events } from '@/utils/eventBus';
 
 const { TextArea } = Input;
+
+// 表单项布局组件
+const FormItemLayout: React.FC<FormItemLayoutProps> = ({ 
+  label, 
+  colon = true, 
+  required = false, 
+  disabled = false, 
+  name, 
+  rules, 
+  input 
+}) => {
+  return (
+    <div className="flex items-center">
+      <div className={`w-16 text-left ${required ? 'text-red-500' : ''}`}>
+        {label}{colon ? '：' : ''}
+      </div>
+      <div className="flex-1 ml-2">
+        <Form.Item
+          name={name}
+          rules={rules}
+          noStyle
+        >
+          {disabled ? (
+            <Input readOnly disabled />
+          ) : (
+            input
+          )}
+        </Form.Item>
+      </div>
+    </div>
+  );
+};
 
 const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [form] = Form.useForm();
@@ -135,7 +167,7 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       setAvatarModalVisible(false);
 
       // 更新Header中的头像
-      updateHeaderAvatar(updatedProfile.avatar);
+      updateHeaderAvatar(form.getFieldValue('avatar'));
     } catch (error: any) {
       message.error(error.message || '头像上传失败');
     } finally {
@@ -200,7 +232,7 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <div className="w-16 text-left">昵称 ：</div>
                   <div className="flex-1 ml-2">
                     <Form.Item
-                      name="nickname"
+                  name="nickname"
                       rules={[{ required: true, message: '请输入昵称' }]}
                       noStyle
                     >
@@ -217,11 +249,11 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       rules={[{ required: true, message: '请选择性别' }]}
                       noStyle
                     >
-                      <Radio.Group>
-                        <Radio value="male">男</Radio>
-                        <Radio value="female">女</Radio>
-                        <Radio value="other">其他</Radio>
-                      </Radio.Group>
+                    <Radio.Group>
+                      <Radio value="male">男</Radio>
+                      <Radio value="female">女</Radio>
+                      <Radio value="other">其他</Radio>
+                    </Radio.Group>
                     </Form.Item>
                   </div>
                 </div>
@@ -234,13 +266,13 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       rules={[{ max: 200, message: '个人简介不能超过200个字符' }]}
                       noStyle
                     >
-                      <TextArea
-                        placeholder="请输入个人简介"
-                        rows={4}
-                        showCount
-                        maxLength={200}
+                    <TextArea 
+                      placeholder="请输入个人简介" 
+                      rows={4} 
+                      showCount 
+                      maxLength={200} 
                         className="w-full"
-                      />
+                />
                     </Form.Item>
                   </div>
                 </div>
@@ -278,13 +310,13 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           footer={null}
           width={500}
         >
-          <Upload {...uploadProps} className="flex justify-center">
+          <Upload {...uploadProps} className="flex justify-center mb-2">
             <Button icon={<UploadOutlined />}>选择头像</Button>
           </Upload>
-          <div className="text-gray-500 text-sm mt-2 text-center">
+          <div className="text-gray-500 text-sm text-center mb-4">
             提示：只能上传JPG/PNG/GIF格式的图片，且大小不能超过2MB
           </div>
-          <div className="flex justify-center mt-4">
+          <div className="flex justify-center">
             <Button
               type="primary"
               onClick={handleUpload}
