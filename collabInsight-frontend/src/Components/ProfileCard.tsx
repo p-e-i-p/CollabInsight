@@ -15,10 +15,10 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [avatarFileList, setAvatarFileList] = useState<UploadFile[]>([]);
   const [uploadLoading, setUploadLoading] = useState<boolean>(false);
   const [avatarModalVisible, setAvatarModalVisible] = useState<boolean>(false);
-  
+
   // 获取Home组件的上下文，用于更新Header中的头像
   const { setShowProfileCard: _setShowProfileCard } = useContext(HomeContext);
-  
+
   // 更新Header头像的函数
   const updateHeaderAvatar = (avatarUrl: string) => {
     // 触发头像更新事件，通知Home组件更新头像
@@ -62,10 +62,10 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         bio: profile.bio,
         avatar: profile.avatar,
       });
-      
+
       // 触发用户信息更新事件
       eventBus.emit(Events.USER_PROFILE_UPDATED);
-      
+
       // 关闭个人中心页面
       setTimeout(() => {
         onClose();
@@ -133,7 +133,7 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       message.success('头像上传成功');
       setAvatarFileList([]);
       setAvatarModalVisible(false);
-      
+
       // 更新Header中的头像
       updateHeaderAvatar(updatedProfile.avatar);
     } catch (error: any) {
@@ -144,9 +144,9 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 h-500px">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 ">
       <Card
-        className="col-span-1 shadow-xl rounded-lg border-2 bg-white max-w-[90vw] w-[500px] overflow-auto"
+        className="col-span-1 shadow-xl rounded-lg border-2 bg-white max-w-[80vw] w-[500px] overflow-auto"
         title={
           <div className="flex items-center justify-center">
             <UserOutlined className="mr-2" />
@@ -159,12 +159,18 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Spin size="large" />
           </div>
         ) : (
-          <div className="p-4">
+          <div className="p-2">
             <div className="flex flex-col items-center mb-6">
               <div className="relative">
                 <Avatar
-                  size={100}
-                  src={form.getFieldValue('avatar') ? (form.getFieldValue('avatar').startsWith('http') ? form.getFieldValue('avatar') : `http://localhost:3000${form.getFieldValue('avatar')}`) : ''}
+                  size={80}
+                  src={
+                    form.getFieldValue('avatar')
+                      ? form.getFieldValue('avatar').startsWith('http')
+                        ? form.getFieldValue('avatar')
+                        : `http://localhost:3000${form.getFieldValue('avatar')}`
+                      : ''
+                  }
                   icon={<UserOutlined />}
                   className="cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setAvatarModalVisible(true)}
@@ -179,56 +185,84 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               <div className="mt-2 text-gray-600">点击头像可更换</div>
             </div>
 
-            <Form form={form} layout="vertical" onFinish={handleFinish} className="w-full">
-              <Form.Item label="ID" name="_id">
-                <Input readOnly disabled />
-              </Form.Item>
-
-              <Form.Item
-                label="昵称"
-                name="nickname"
-                rules={[{ required: true, message: '请输入昵称' }]}
-              >
-                <Input placeholder="请输入昵称" />
-              </Form.Item>
-
-              <Form.Item
-                label="性别"
-                name="gender"
-                rules={[{ required: true, message: '请选择性别' }]}
-              >
-                <Radio.Group>
-                  <Radio value="male">男</Radio>
-                  <Radio value="female">女</Radio>
-                  <Radio value="other">其他</Radio>
-                </Radio.Group>
-              </Form.Item>
-
-              <Form.Item
-                label="个人简介"
-                name="bio"
-                rules={[{ max: 200, message: '个人简介不能超过200个字符' }]}
-              >
-                <TextArea placeholder="请输入个人简介" rows={4} showCount maxLength={200} />
-              </Form.Item>
-
-              <Form.Item>
-                <div className="flex flex-col space-y-3 mt-4">
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    autoInsertSpace
-                    block
-                    size="large"
-                    loading={loading}
-                  >
-                    保存修改
-                  </Button>
-                  <Button type="default" onClick={onClose} block size="large">
-                    关闭
-                  </Button>
+            <Form form={form} onFinish={handleFinish} className="w-full">
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <div className="w-16 text-left">ID ：</div>
+                  <div className="flex-1 ml-2">
+                    <Form.Item name="_id" noStyle>
+                      <Input readOnly disabled className="w-full" />
+                    </Form.Item>
+                  </div>
                 </div>
-              </Form.Item>
+
+                <div className="flex items-center">
+                  <div className="w-16 text-left">昵称 ：</div>
+                  <div className="flex-1 ml-2">
+                    <Form.Item
+                      name="nickname"
+                      rules={[{ required: true, message: '请输入昵称' }]}
+                      noStyle
+                    >
+                      <Input placeholder="请输入昵称" className="w-full" />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <div className="w-16 text-left">性别 ：</div>
+                  <div className="flex-1 ml-2">
+                    <Form.Item
+                      name="gender"
+                      rules={[{ required: true, message: '请选择性别' }]}
+                      noStyle
+                    >
+                      <Radio.Group>
+                        <Radio value="male">男</Radio>
+                        <Radio value="female">女</Radio>
+                        <Radio value="other">其他</Radio>
+                      </Radio.Group>
+                    </Form.Item>
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <div className="w-16 text-left">个人简介 ：</div>
+                  <div className="flex-1 ml-2">
+                    <Form.Item
+                      name="bio"
+                      rules={[{ max: 200, message: '个人简介不能超过200个字符' }]}
+                      noStyle
+                    >
+                      <TextArea
+                        placeholder="请输入个人简介"
+                        rows={4}
+                        showCount
+                        maxLength={200}
+                        className="w-full"
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                <Form.Item>
+                  <div className="flex flex-col space-y-3 mt-4">
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      autoInsertSpace
+                      block
+                      size="large"
+                      loading={loading}
+                    >
+                      保存修改
+                    </Button>
+                    <Button type="default" onClick={onClose} block size="large">
+                      关闭
+                    </Button>
+                  </div>
+                </Form.Item>
+              </div>
             </Form>
           </div>
         )}
