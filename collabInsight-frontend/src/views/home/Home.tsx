@@ -40,6 +40,7 @@ export const Home: React.FC = () => {
   const [form] = Form.useForm();
   const [userAvatar, setUserAvatar] = useState<string>('');
   const [menuItems, setMenuItems] = useState<any[]>(() => generateMenuItems());
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([window.location.pathname.split('/')[1] || '/']);
 
   // 获取用户角色并生成菜单项
   useEffect(() => {
@@ -101,6 +102,24 @@ export const Home: React.FC = () => {
 
     // 清理定时器
     return () => clearInterval(timerId);
+  }, []);
+
+  // 监听路径变化并更新选中的菜单项
+  useEffect(() => {
+    const handlePathChange = () => {
+      const pathKey = window.location.pathname.split('/')[1] || '/';
+      setSelectedKeys([pathKey]);
+    };
+
+    // 初始化设置
+    handlePathChange();
+    
+    // 监听popstate事件（浏览器前进/后退）
+    window.addEventListener('popstate', handlePathChange);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePathChange);
+    };
   }, []);
 
   const handelMenuClick: MenuProps['onClick'] = ({ key }) => {
@@ -192,7 +211,7 @@ export const Home: React.FC = () => {
         </div>
         <Menu
           onClick={handelMenuClick}
-          defaultSelectedKeys={['/']}
+          selectedKeys={selectedKeys}
           mode="inline"
           items={menuItems}
         />
