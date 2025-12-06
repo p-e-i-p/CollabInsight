@@ -1,7 +1,9 @@
 import React from 'react'
 
-export const Bug = () => {
+const Bug = () => {
   return (
     <div>Bug</div>
   )
 }
+
+export default Bug;

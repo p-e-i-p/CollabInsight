@@ -19,7 +19,7 @@ import {
   UserOutlined,
   DownOutlined,
 } from '@ant-design/icons';
-import { menuItems } from './menu';
+import { generateMenuItems } from './menu';
 import { changePassword } from '@/request/api/changePassword';
 import { getUserProfile } from '@/request/api/user/profile';
 import ProfileCard from '@/Components/ProfileCard';
@@ -39,19 +39,27 @@ export const Home: React.FC = () => {
   const [showProfileCard, setShowProfileCard] = useState<boolean>(false);
   const [form] = Form.useForm();
   const [userAvatar, setUserAvatar] = useState<string>('');
-  
-  // 获取用户头像信息
+  const [menuItems, setMenuItems] = useState<any[]>(() => generateMenuItems());
+
+  // 获取用户角色并生成菜单项
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const profile = await getUserProfile();
         setUserAvatar(profile.avatar ? (profile.avatar.startsWith('http') ? profile.avatar : `http://localhost:3000${profile.avatar}`) : '');
+        // 保存用户角色到localStorage
+        localStorage.setItem('userRole', profile.role);
+        console.log('用户角色:', profile.role);
+        // 生成菜单项
+        setMenuItems(generateMenuItems());
       } catch (error) {
         console.error('获取用户头像失败', error);
       }
     };
 
     fetchUserProfile();
+  
+
     
     // 监听头像更新事件
     const handleAvatarUpdated = (avatarUrl: string) => {
@@ -169,8 +177,7 @@ export const Home: React.FC = () => {
         </div>
         <Menu
           onClick={handelMenuClick}
-          defaultSelectedKeys={['1']}
-          defaultOpenKeys={['sub1']}
+          defaultSelectedKeys={['/']}
           mode="inline"
           items={menuItems}
         />
@@ -286,3 +293,5 @@ export const Home: React.FC = () => {
     </HomeContext.Provider>
   );
 };
+
+export default Home;

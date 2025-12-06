@@ -6,7 +6,7 @@ export type LoginParams = {
 export type LoginResponse = {
   token: string;
   userInfo: {
-    _id: number;
+    _id: string;
     username: string;
     role: 'admin' | 'user';
   };

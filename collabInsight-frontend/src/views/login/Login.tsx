@@ -1,7 +1,7 @@
 import { login } from '@/request/api/login';
 import type { LoginParams } from '@/request/api/login/type';
-import auth from '@/utils/http';
-import { Form, Button, Input, Card } from 'antd';
+import { auth } from '@/utils/http';
+import { Form, Button, Input, Card, message } from 'antd';
 import FormItem from 'antd/es/form/FormItem';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,10 +15,22 @@ export const Login = () => {
     try {
       setloading(true);
       const res = await login(values);
+      console.log('登录成功响应:', res);
       auth.setToken(res.token);
+      // 保存用户角色到localStorage
+      if (res.userInfo && res.userInfo.role) {
+        localStorage.setItem('userRole', res.userInfo.role);
+        console.log('已保存用户角色:', res.userInfo.role);
+      }
+      console.log('准备跳转到首页');
       navigate('/');
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      console.error('登录失败:', error);
+      if (error.response && error.response.data && error.response.data.message) {
+        message.error(error.response.data.message);
+      } else {
+        message.error(error.message || '登录失败，请检查用户名和密码');
+      }
     } finally {
       setloading(false);
     }
@@ -65,3 +77,5 @@ export const Login = () => {
     </div>
   );
 };
+
+export default Login;

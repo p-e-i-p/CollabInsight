@@ -54,7 +54,9 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     const res = response.data;
-    if (res.code !== 200) {
+    console.log('HTTP响应数据:', res);
+    // 检查请求是否成功
+    if (res.code !== 200 && res.code !== undefined && !res.data) {
       if (res.code === 401) {
         message.error('登录过期，请重新登录');
         auth.removeToken();
@@ -66,7 +68,9 @@ service.interceptors.response.use(
       if (response.config.showSuccessToast) {
         message.success(res.msg || '请求成功');
       }
-      return res.data;
+      const result = res.data || res;
+      console.log('HTTP响应处理后的数据:', result);
+      return result;
     }
   },
   (error: any) => {
@@ -136,4 +140,4 @@ export const http = {
   ) => request<T>({ url, method: 'DELETE', params, ...options }),
 };
 
-export default auth;
+export { auth };

@@ -3,23 +3,26 @@ import { createBrowserRouter } from 'react-router-dom';
 import { lazy } from 'react';
 import { AuthGuard } from '@/utils/authGuard';
 
-const Home = lazy(() => import('@/views/home/Home').then((mod) => ({ default: mod.Home })));
-const Login = lazy(() => import('@/views/login/Login').then((mod) => ({ default: mod.Login })));
+const Home = lazy(() => import('@/views/home/Home').then((mod) => ({ default: mod.default })));
+const Login = lazy(() => import('@/views/login/Login').then((mod) => ({ default: mod.default })));
 const Register = lazy(() =>
-  import('@/views/register/Register').then((mod) => ({ default: mod.Register }))
+  import('@/views/register/Register').then((mod) => ({ default: mod.default }))
 );
 const TaskCenter = lazy(() =>
-  import('@/views/center/TaskCenter').then((mod) => ({ default: mod.TaskCenter }))
+  import('@/views/center/TaskCenter').then((mod) => ({ default: mod.default }))
 );
 const Message = lazy(() =>
-  import('@/views/message/Message').then((mod) => ({ default: mod.Message }))
+  import('@/views/message/Message').then((mod) => ({ default: mod.default }))
 );
-const Bug = lazy(() => import('@/views/bug/Bug').then((mod) => ({ default: mod.Bug })));
+const Bug = lazy(() => import('@/views/bug/Bug').then((mod) => ({ default: mod.default })));
 const Profile = lazy(() =>
   import('@/views/profile/Profile').then((mod) => ({ default: mod.default }))
 );
+const UserManagement = lazy(() =>
+  import('@/views/userManagement/UserManagement').then((mod) => ({ default: mod.default }))
+);
 const NotFound = lazy(() =>
-  import('@/views/otherPage/NotFound').then((mod) => ({ default: mod.NotFound }))
+  import('@/views/otherPage/NotFound').then((mod) => ({ default: mod.default }))
 );
 export const routes = [
   {
@@ -78,6 +81,15 @@ export const routes = [
           </AuthGuard>
         ),
         meta: { title: '个人中心' },
+      },
+      {
+        path: 'user-management',
+        element: (
+          <AuthGuard>
+            <UserManagement />
+          </AuthGuard>
+        ),
+        meta: { title: '人员管理' },
       },
     ],
   },

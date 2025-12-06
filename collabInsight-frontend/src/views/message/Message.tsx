@@ -147,3 +147,5 @@ const Message: React.FC = () => {
     </div>
   );
 };
+
+export default Message;

@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const User = require('../models/User');
 const { generateToken } = require('../utils/jwt');
-const { protect } = require('../middleware/auth');
+const { protect, admin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -68,19 +68,16 @@ router.post('/login', async (req, res) => {
     const token = generateToken(user._id);
 
     res.status(200).json({
-      code: 200,
-      data: {
-        token,
-        userInfo: {
-          _id: user._id,
-          username: user.username,
-          role: user.role
-        }
+      token,
+      userInfo: {
+        _id: user._id,
+        username: user.username,
+        role: user.role
       }
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: error.message || '服务器错误' });
   }
 });
 
@@ -266,6 +263,150 @@ router.post('/avatar', protect, upload.single('avatar'), async (req, res) => {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ message: '文件大小不能超过2MB' });
     }
+    res.status(500).json({ message: '服务器错误' });
+  }
+});
+
+// @desc    获取所有用户
+// @route   GET /users
+// @access  私有(管理员)
+router.get('/users', protect, admin, async (req, res) => {
+  try {
+    console.log('开始获取用户列表...');
+    const users = await User.find().select('-password');
+    console.log(`找到 ${users.length} 个用户`);
+    console.log('用户列表:', users);
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('获取用户列表失败:', error);
+    res.status(500).json({ message: '服务器错误' });
+  }
+});
+
+// @desc    获取单个用户
+// @route   GET /users/:id
+// @access  私有(管理员)
+router.get('/users/:id', protect, admin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: '服务器错误' });
+  }
+});
+
+// @desc    创建新用户
+// @route   POST /users
+// @access  私有(管理员)
+router.post('/users', protect, admin, async (req, res) => {
+  try {
+    const { username, email, password, role } = req.body;
+
+    // 检查用户是否已存在
+    const userExists = await User.findOne({ $or: [{ email }, { username }] });
+    if (userExists) {
+      return res.status(400).json({ message: '用户名或邮箱已被注册' });
+    }
+
+    // 创建新用户
+    const user = await User.create({
+      username,
+      email,
+      password,
+      role: role || 'user',
+    });
+
+    res.status(201).json({
+      code: 201,
+      message: '用户创建成功',
+      data: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: '服务器错误' });
+  }
+});
+
+// @desc    更新用户
+// @route   PUT /users/:id
+// @access  私有(管理员)
+router.put('/users/:id', protect, admin, async (req, res) => {
+  try {
+    const { username, email, role } = req.body;
+
+    // 查找用户
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+
+    // 检查用户名或邮箱是否已被其他用户使用
+    if (username || email) {
+      const existingUser = await User.findOne({ 
+        $or: [{ email }, { username }], 
+        _id: { $ne: req.params.id } 
+      });
+      
+      if (existingUser) {
+        return res.status(400).json({ message: '用户名或邮箱已被使用' });
+      }
+    }
+
+    // 更新用户信息
+    if (username) user.username = username;
+    if (email) user.email = email;
+    if (role) user.role = role;
+
+    await user.save();
+
+    res.status(200).json({
+      code: 200,
+      message: '用户信息更新成功',
+      data: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: '服务器错误' });
+  }
+});
+
+// @desc    删除用户
+// @route   DELETE /users/:id
+// @access  私有(管理员)
+router.delete('/users/:id', protect, admin, async (req, res) => {
+  try {
+    // 不允许删除自己
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ message: '不能删除自己' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+
+    await user.remove();
+
+    res.status(200).json({
+      code: 200,
+      message: '用户删除成功'
+    });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: '服务器错误' });
   }
 });
