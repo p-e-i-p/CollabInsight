@@ -111,7 +111,22 @@ export const Home: React.FC = () => {
   // 处理下拉菜单点击
   const handleDropdownClick = ({ key }: { key: string }) => {
     if (key === 'logout') {
+      // 清除token和用户角色信息
       localStorage.removeItem('token');
+      localStorage.removeItem('userRole');
+      
+      // 通知其他已打开的页面用户已退出登录
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'userRole',
+        newValue: null,
+        url: window.location.href
+      }));
+      
+      // 触发自定义事件，以便其他组件能够响应用户退出登录
+      window.dispatchEvent(new CustomEvent('userRoleChanged', {
+        detail: { role: null }
+      }));
+      
       window.location.href = '/login';
     } else if (key === 'change-password') {
       setShowPasswordCard(true);

@@ -47,7 +47,29 @@ const UserManagement: React.FC = () => {
   const [searchText, setSearchText] = useState<string>('');
 
   // 检查是否是管理员
-  const isAdmin = auth.isLogin() && localStorage.getItem('userRole') === 'admin';
+  const [isAdmin, setIsAdmin] = useState(auth.isLogin() && localStorage.getItem('userRole') === 'admin');
+  
+  // 当用户角色变化时更新isAdmin状态
+  useEffect(() => {
+    const updateUserRole = () => {
+      const loggedIn = auth.isLogin();
+      const userRole = localStorage.getItem('userRole');
+      setIsAdmin(loggedIn && userRole === 'admin');
+      console.log(`用户角色已更新: ${userRole}, 是否是管理员: ${loggedIn && userRole === 'admin'}`);
+    };
+    
+    // 监听storage事件
+    window.addEventListener('storage', updateUserRole);
+    
+    // 监听自定义事件
+    window.addEventListener('userRoleChanged', updateUserRole as EventListener);
+    
+    // 组件卸载时移除监听器
+    return () => {
+      window.removeEventListener('storage', updateUserRole);
+      window.removeEventListener('userRoleChanged', updateUserRole as EventListener);
+    };
+  }, []);
 
   // 获取用户列表
   const fetchUsers = async () => {
@@ -78,25 +100,10 @@ const UserManagement: React.FC = () => {
     fetchUsers();
   }, []);
 
-  // 监听用户角色变化
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'userRole') {
-        console.log('检测到用户角色变化，重新获取用户列表...');
-        fetchUsers();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-  
-  // 添加自定义事件监听，以便在其他地方更新用户角色时能通知到本组件
+  // 当用户角色变化时，除了更新isAdmin状态，还需要重新获取用户列表
   useEffect(() => {
     const handleUserRoleChange = () => {
-      console.log('通过自定义事件检测到用户角色变化，重新获取用户列表...');
+      console.log('检测到用户角色变化，重新获取用户列表...');
       fetchUsers();
     };
 

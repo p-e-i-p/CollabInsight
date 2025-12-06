@@ -21,6 +21,16 @@ export const Login = () => {
       if (res.userInfo && res.userInfo.role) {
         localStorage.setItem('userRole', res.userInfo.role);
         console.log('已保存用户角色:', res.userInfo.role);
+        // 通知其他已打开的页面用户角色已更改
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'userRole',
+          newValue: res.userInfo.role,
+          url: window.location.href
+        }));
+        // 触发自定义事件，以便其他组件能够响应用户角色变化
+        window.dispatchEvent(new CustomEvent('userRoleChanged', {
+          detail: { role: res.userInfo.role }
+        }));
       }
       console.log('准备跳转到首页');
       navigate('/');
