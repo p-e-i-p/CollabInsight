@@ -355,10 +355,10 @@ export const TaskCenter: React.FC = () => {
   ];
 
   return (
-    <div className="h-full w-full p-3 flex flex-col">
-      <div className="flex flex-col lg:flex-row gap-4 h-full flex-grow">
+    <div className="h-full w-full flex flex-col" style={{ padding: "12px" }}>
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden" style={{ gap: "16px" }}>
         {/* 左侧：项目列表（共用组件） */}
-        <div className="w-1/4 lg:w-1/5 xl:w-1/6">
+        <div className="w-full lg:w-1/4 xl:w-1/5 flex-shrink-0" style={{ minWidth: "240px", flexBasis: "240px", display: "flex", flexDirection: "column" }}>
           <ProjectList
             projectData={projectData}
             selectedProjectKey={selectedProject ? Object.keys(projectData).find(key => projectData[key] === selectedProject) || null : null}
@@ -381,7 +381,7 @@ export const TaskCenter: React.FC = () => {
         </div>
 
         {/* 右侧：展示选中项目下的所有任务 */}
-        <div className="flex-1 p-4 border rounded-lg bg-white overflow-auto">
+        <div className="p-4 border rounded-lg bg-white overflow-hidden" style={{ flexShrink: 1, minWidth: 0, width: "calc(100% - 256px)" }}>
           {selectedProject ? (
             <div className="space-y-6">
               {/* 项目基本信息 */}
@@ -427,29 +427,29 @@ export const TaskCenter: React.FC = () => {
               </div>
 
               {/* 项目下的任务列表 */}
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">任务列表</h3>
-                  <Space>
+              <div className="flex flex-col h-full" style={{ minHeight: 0, overflow: "hidden" }}>
+                <div className="flex justify-between items-center mb-4" style={{ flexWrap: "nowrap", gap: "8px" }}>
+                  <h3 className="text-lg font-semibold whitespace-nowrap">任务列表</h3>
+                  <div className="flex items-center" style={{ flexWrap: "nowrap", gap: "8px", overflow: "hidden", minWidth: 0 }}>
                     <Input
                       placeholder="搜索任务名称"
                       prefix={<SearchOutlined />}
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
-                      style={{ width: 200 }}
+                      style={{ width: 140 }}
                       onPressEnter={handleSearch}
                     />
                     <Input
-                      placeholder="按任务详情筛选"
+                      placeholder="任务详情"
                       prefix={<SearchOutlined />}
                       value={taskDetailsFilter}
                       onChange={(e) => setTaskDetailsFilter(e.target.value)}
-                      style={{ width: 160 }}
+                      style={{ width: 120 }}
                       onPressEnter={handleSearch}
                     />
                     <Select
-                      placeholder="按紧急程度筛选"
-                      style={{ width: 120 }}
+                      placeholder="紧急程度"
+                      style={{ width: 80 }}
                       allowClear
                       onChange={(value) => setUrgencyFilter(value)}
                     >
@@ -461,6 +461,7 @@ export const TaskCenter: React.FC = () => {
                       icon={<ReloadOutlined />}
                       onClick={handleRefreshTasks}
                       title="刷新任务列表"
+                      size="small"
                     >
                       刷新
                     </Button>
@@ -468,28 +469,35 @@ export const TaskCenter: React.FC = () => {
                       type="primary"
                       icon={<PlusOutlined />}
                       onClick={handleAddTask}
+                      size="small"
                     >
-                      添加任务
+                      添加
                     </Button>
-                  </Space>
+                    {/* 添加水平滚动条 */}
+                    <div style={{ flexShrink: 0, width: 1 }}></div>
+                  </div>
                 </div>
 
                 {/* 任务表格 */}
-                <Table
-                  columns={taskColumns}
-                  dataSource={filteredTasks}
-                  rowKey={(record) => record.taskName + record.startDate}
-                  locale={{
-                    emptyText: '暂无任务数据，请点击"添加任务"按钮创建新任务',
-                  }}
-                  pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showQuickJumper: true,
-                    showTotal: (total) => `共 ${total} 条任务记录`,
-                  }}
-                  size="middle"
-                />
+                <div className="flex flex-col h-full">
+                  <div className="flex-grow overflow-auto" style={{ minHeight: 0 }}>
+                    <Table
+                      columns={taskColumns}
+                      dataSource={filteredTasks}
+                      rowKey={(record) => record.taskName + record.startDate}
+                      locale={{
+                        emptyText: '暂无任务数据，请点击"添加任务"按钮创建新任务',
+                      }}
+                      pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total) => `共 ${total} 条任务记录`,
+                      }}
+                      size="middle"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* 空任务提示 */}
