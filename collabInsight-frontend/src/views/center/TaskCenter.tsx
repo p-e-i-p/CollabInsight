@@ -3,7 +3,7 @@ import { ProjectList } from '@/components/ProjectList';
 import TaskForm from './TaskForm';
 import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
-import { Table, Space, Select, Input, Button, Tag, message, Form } from 'antd';
+import { Table, Space, Select, Input, Button, Tag, message, Form, Modal } from 'antd';
 import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -93,6 +93,8 @@ export const TaskCenter: React.FC = () => {
 
   // 新增任务相关状态
   const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
+  // 编辑任务相关状态
+  const [editingTask, setEditingTask] = useState<any>(null);
 
   // 当选中项目或筛选条件变化时，更新过滤后的任务
   useEffect(() => {
@@ -166,8 +168,71 @@ export const TaskCenter: React.FC = () => {
       return;
     }
 
+    // 重置编辑状态
+    setEditingTask(null);
     // 显示任务添加弹窗
     setIsTaskModalVisible(true);
+  };
+
+  // 编辑任务
+  const handleEditTask = (task: any) => {
+    if (!selectedProject) {
+      message.warning('请先选择一个项目');
+      return;
+    }
+
+    // 设置编辑任务数据
+    setEditingTask(task);
+    // 显示任务编辑弹窗
+    setIsTaskModalVisible(true);
+  };
+
+  // 删除任务
+  const handleDeleteTask = (task: any) => {
+    if (!selectedProject) {
+      message.warning('请先选择一个项目');
+      return;
+    }
+
+    // 显示确认弹窗
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除任务"${task.taskName}"吗？`,
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk() {
+        // 执行删除操作
+        executeDeleteTask(task);
+      },
+    });
+  };
+
+  // 执行删除任务操作
+  const executeDeleteTask = (task: any) => {
+    // 更新项目数据，移除任务
+    const updatedProjectData = { ...projectData };
+    const projectKey = Object.keys(projectData).find(key => projectData[key] === selectedProject);
+    
+    if (projectKey) {
+      // 过滤掉要删除的任务
+      const updatedTasks = updatedProjectData[projectKey].tasks.filter(t => t.taskId !== task.taskId);
+      
+      updatedProjectData[projectKey].tasks = updatedTasks;
+      
+      // 更新选中的项目
+      setSelectedProject({
+        ...updatedProjectData[projectKey],
+        tasks: updatedTasks
+      });
+      
+      // 更新筛选后的任务列表
+      setFilteredTasks(updatedTasks);
+      
+      message.success('任务删除成功！');
+    } else {
+      message.error('无法确定项目，请重试');
+    }
   };
 
   // 打开新增项目弹窗
@@ -181,7 +246,7 @@ export const TaskCenter: React.FC = () => {
     // setIsProjectModalVisible(false);
   };
 
-  // 处理任务提交
+  // 处理任务提交（新增或编辑）
   const handleTaskSubmit = (values: {
     taskName: string;
     assignee: string;
@@ -193,54 +258,96 @@ export const TaskCenter: React.FC = () => {
   }) => {
     if (!selectedProject) return;
 
-    // 生成任务ID
-    const taskId = `t${Date.now()}`;
-
     // 获取分配人信息
     const assigneeId = values.assignee;
     const assignee = userData[assigneeId as keyof typeof userData];
 
-    // 创建新任务对象
-    const newTask = {
-      taskId,
-      taskName: values.taskName,
-      taskDetails: values.taskDetails,
-      assignee: assignee.name,
-      startDate: values.startDate.format('YYYY-MM-DD'),
-      deadline: values.deadline.format('YYYY-MM-DD'),
-      urgency: values.urgency
-    };
+    // 判断是新增还是编辑
+    if (editingTask) {
+      // 编辑现有任务
+      const updatedTask = {
+        ...editingTask,
+        taskName: values.taskName,
+        taskDetails: values.taskDetails,
+        assignee: assignee.name,
+        startDate: values.startDate.format('YYYY-MM-DD'),
+        deadline: values.deadline.format('YYYY-MM-DD'),
+        urgency: values.urgency
+      };
 
-    // 更新项目数据，添加新任务
-    const updatedProjectData = { ...projectData };
-    // 优先使用传入的projectKey，如果没有则使用当前选中的项目
-    const projectKey = values.projectKey || Object.keys(projectData).find(key => projectData[key] === selectedProject);
-    
-    if (projectKey) {
-      updatedProjectData[projectKey].tasks = [
-        ...updatedProjectData[projectKey].tasks,
-        newTask
-      ];
+      // 更新项目数据
+      const updatedProjectData = { ...projectData };
+      const projectKey = values.projectKey || Object.keys(projectData).find(key => projectData[key] === selectedProject);
       
-      // 更新选中的项目
-      setSelectedProject({
-        ...updatedProjectData[projectKey],
-        tasks: [
+      if (projectKey) {
+        // 更新任务列表
+        const updatedTasks = updatedProjectData[projectKey].tasks.map(task => 
+          task.taskId === editingTask.taskId ? updatedTask : task
+        );
+        
+        updatedProjectData[projectKey].tasks = updatedTasks;
+        
+        // 更新选中的项目
+        setSelectedProject({
+          ...updatedProjectData[projectKey],
+          tasks: updatedTasks
+        });
+        
+        // 更新筛选后的任务列表
+        setFilteredTasks(updatedTasks);
+        
+        message.success('任务更新成功！');
+        setIsTaskModalVisible(false);
+      } else {
+        message.error('无法确定项目，请重试');
+      }
+    } else {
+      // 添加新任务
+      // 生成任务ID
+      const taskId = `t${Date.now()}`;
+
+      // 创建新任务对象
+      const newTask = {
+        taskId,
+        taskName: values.taskName,
+        taskDetails: values.taskDetails,
+        assignee: assignee.name,
+        startDate: values.startDate.format('YYYY-MM-DD'),
+        deadline: values.deadline.format('YYYY-MM-DD'),
+        urgency: values.urgency
+      };
+
+      // 更新项目数据，添加新任务
+      const updatedProjectData = { ...projectData };
+      // 优先使用传入的projectKey，如果没有则使用当前选中的项目
+      const projectKey = values.projectKey || Object.keys(projectData).find(key => projectData[key] === selectedProject);
+      
+      if (projectKey) {
+        updatedProjectData[projectKey].tasks = [
           ...updatedProjectData[projectKey].tasks,
           newTask
-        ]
-      });
-      
-      // 更新筛选后的任务列表
-      setFilteredTasks([
-        ...updatedProjectData[projectKey].tasks,
-        newTask
-      ]);
-      
-      message.success('任务添加成功！');
-      setIsTaskModalVisible(false);
-    } else {
-      message.error('无法确定项目，请重试');
+        ];
+        
+        // 更新选中的项目
+        setSelectedProject({
+          ...updatedProjectData[projectKey],
+          tasks: [
+            ...updatedProjectData[projectKey].tasks,
+            newTask
+          ]
+        });
+        
+        // 更新筛选后的任务列表
+        setFilteredTasks([
+          ...updatedProjectData[projectKey].tasks,
+          newTask
+        ]);
+        
+        message.success('任务添加成功！');
+        setIsTaskModalVisible(false);
+      } else {
+        message.error('无法确定项目，请重试');
+      }
     }
   };
 
@@ -345,10 +452,10 @@ export const TaskCenter: React.FC = () => {
       title: '操作',
       key: 'action',
       width: 120,
-      render: (_, _record) => (
+      render: (_, record) => (
         <Space size="middle">
-          <Button type="link" size="small">编辑</Button>
-          <Button type="link" size="small" danger>删除</Button>
+          <Button type="link" size="small" onClick={() => handleEditTask(record)}>编辑</Button>
+          <Button type="link" size="small" danger onClick={() => handleDeleteTask(record)}>删除</Button>
         </Space>
       ),
     },
@@ -515,7 +622,7 @@ export const TaskCenter: React.FC = () => {
         </div>
       </div>
 
-      {/* 添加任务弹窗 */}
+      {/* 添加/编辑任务弹窗 */}
       <TaskForm
         visible={isTaskModalVisible}
         onCancel={handleTaskModalCancel}
@@ -524,6 +631,15 @@ export const TaskCenter: React.FC = () => {
         currentUserRole={currentUser.role}
         currentUser={currentUser}
         userData={userData}
+        initialValues={editingTask ? {
+          taskName: editingTask.taskName,
+          assignee: Object.keys(userData).find(key => userData[key].name === editingTask.assignee),
+          startDate: dayjs(editingTask.startDate),
+          deadline: dayjs(editingTask.deadline),
+          urgency: editingTask.urgency,
+          taskDetails: editingTask.taskDetails
+        } : undefined}
+        isEdit={!!editingTask}
       />
     </div>
   );
