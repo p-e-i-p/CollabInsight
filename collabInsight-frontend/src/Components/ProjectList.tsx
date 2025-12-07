@@ -82,6 +82,14 @@ export const ProjectList: React.FC<ProjectListProps> = ({
     projectForm.resetFields();
   };
 
+  // 打开添加任务弹窗
+  const showTaskModal = (projectKey: string) => {
+    // 调用父组件传递的添加任务处理函数
+    if (onAddTask) {
+      onAddTask(projectKey, null);
+    }
+  };
+
   // 打开编辑项目弹窗
   const showEditProjectModal = (projectKey: string) => {
     const project = projectData[projectKey];
@@ -196,29 +204,32 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   return (
     <div className="project-list-container">
       <CustomList
-      title="全部项目列表"
-      listItems={taskItems}
-      defaultSelectedKey={selectedProjectKey || '1'} // 默认选中第一个项目
-      onItemClick={onItemClick}
-      onAdd={showProjectModal}
-      onUpdate={handleUpdate}
-      onDelete={(item) => {
-        // 触发删除确认
-        Modal.confirm({
-          title: '确认删除',
-          content: `确定要删除项目"${item.label}"吗？此操作不可恢复。`,
-          okText: '确认',
-          cancelText: '取消',
-          onOk: () => {
-            onDeleteProject?.(item.key);
-          },
-        });
-      }}
-      onSearch={onSearch}
-      onPageChange={(page, pageSize) => {
-        console.log(`切换到第 ${page} 页，每页 ${pageSize} 条`);
-      }}
-    />
+        title="全部项目列表"
+        listItems={taskItems}
+        defaultSelectedKey={selectedProjectKey || '1'} // 默认选中第一个项目
+        onItemClick={onItemClick}
+        onAdd={showProjectModal}
+        onUpdate={handleUpdate}
+        onDelete={(item) => {
+          // 触发删除确认
+          Modal.confirm({
+            title: '确认删除',
+            content: `确定要删除项目"${item.label}"吗？此操作不可恢复。`,
+            okText: '确认',
+            cancelText: '取消',
+            onOk: () => {
+              onDeleteProject?.(item.key);
+            },
+          });
+        }}
+        onSearch={onSearch}
+        onPageChange={(page, pageSize) => {
+          console.log(`切换到第 ${page} 页，每页 ${pageSize} 条`);
+        }}
+        onAddTask={(item) => {
+          showTaskModal(item.key);
+        }}
+      />
 
 
 
