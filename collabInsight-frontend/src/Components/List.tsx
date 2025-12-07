@@ -1,5 +1,5 @@
-import { List as AntdList, Button, Pagination, Space, type ListProps as AntdListProps } from 'antd';
-import { DashOutlined, DeleteOutlined, FormOutlined, PlusOutlined } from '@ant-design/icons';
+import { List as AntdList, Button, Pagination, Space, Dropdown, Menu, Modal, type ListProps as AntdListProps } from 'antd';
+import { DashOutlined, DeleteOutlined, EditOutlined, FormOutlined, PlusOutlined, MoreOutlined } from '@ant-design/icons';
 import Search from 'antd/es/input/Search';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +22,9 @@ export interface CustomListProps {
   onSearch?: (value: string) => void;
   /** 新增按钮回调函数 */
   onAdd?: () => void;
-  onUpdate?: () => void;
+  onUpdate?: (item: ListItem) => void;
+  /** 删除回调函数 */
+  onDelete?: (item: ListItem) => void;
   /** 列表项点击回调函数 */
   onItemClick?: (item: ListItem) => void;
   /** 页码变更回调函数（可选，暴露给父组件） */
@@ -51,6 +53,7 @@ const CustomList: React.FC<CustomListProps> = ({
   onSearch,
   onAdd,
   onUpdate,
+  onDelete,
   onItemClick,
   onPageChange,
   defaultSelectedKey = '',
@@ -139,12 +142,42 @@ const CustomList: React.FC<CustomListProps> = ({
       }}
     >
       <AntdList.Item.Meta title={item.label} />
-      <Button type="link" className="flex-end">
-        <FormOutlined
-          className=" cursor-pointer text-base hover:text-grey-700 transition-colors"
-          onClick={onUpdate}
-        />
-      </Button>
+      <div className="flex justify-end">
+        <Dropdown 
+          trigger={['click']} 
+          overlay={(
+            <Menu>
+              <Menu.Item key="edit" icon={<EditOutlined />}>
+                <div onClick={() => onUpdate?.(item)}>编辑</div>
+              </Menu.Item>
+              <Menu.Item key="delete" icon={<DeleteOutlined />}>
+                <div onClick={() => {
+                  Modal.confirm({
+                    title: '确认删除',
+                    content: `确定要删除此项吗？此操作不可恢复。`,
+                    okText: '确认',
+                    cancelText: '取消',
+                    onOk: () => {
+                      // 调用删除回调函数
+                      onDelete?.(item);
+                    },
+                  });
+                }}>删除</div>
+              </Menu.Item>
+            </Menu>
+          )}
+          placement="bottomRight"
+        >
+          <Button 
+            type="text" 
+            className="action-btn" 
+            onClick={(e) => e.stopPropagation()}
+            title="更多操作"
+          >
+            <MoreOutlined className="text-base hover:text-blue-600 transition-colors" />
+          </Button>
+        </Dropdown>
+      </div>
     </AntdList.Item>
   );
 
