@@ -200,7 +200,7 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     form.getFieldValue('avatar')
                       ? form.getFieldValue('avatar').startsWith('http')
                         ? form.getFieldValue('avatar')
-                        : `http://localhost:3000${form.getFieldValue('avatar')}`
+                        : `http://localhost:5000${form.getFieldValue('avatar')}`
                       : ''
                   }
                   icon={<UserOutlined />}

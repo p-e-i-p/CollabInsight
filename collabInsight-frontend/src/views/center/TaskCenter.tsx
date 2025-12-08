@@ -21,6 +21,7 @@ export const TaskCenter: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [taskDetailsFilter, setTaskDetailsFilter] = useState<string | undefined>(undefined);
   const [urgencyFilter, setUrgencyFilter] = useState<string | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string; role: string } | null>(null);
@@ -126,8 +127,11 @@ export const TaskCenter: React.FC = () => {
     if (urgencyFilter) {
       data = data.filter((t) => t.urgency === urgencyFilter);
     }
+    if (statusFilter) {
+      data = data.filter((t) => t.status === statusFilter);
+    }
     setFilteredTasks(data);
-  }, [tasks, searchText, taskDetailsFilter, urgencyFilter]);
+  }, [tasks, searchText, taskDetailsFilter, urgencyFilter, statusFilter]);
 
   const handleAddTask = () => {
     if (!selectedProjectId) {
@@ -169,6 +173,7 @@ export const TaskCenter: React.FC = () => {
       startDate: values.startDate ? values.startDate.toISOString() : undefined,
       deadline: values.deadline ? values.deadline.toISOString() : undefined,
       urgency: values.urgency,
+      status: values.status,
     };
 
     if (editingTask) {
@@ -272,6 +277,23 @@ export const TaskCenter: React.FC = () => {
       sorter: (a: any, b: any) => {
         const order = { 高: 3, 中: 2, 普通: 1 };
         return (order[a.urgency as keyof typeof order] || 1) - (order[b.urgency as keyof typeof order] || 1);
+      },
+    },
+    {
+      title: '任务状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      render: (status: string) => {
+        let color = 'default';
+        if (status === '已完成') color = 'green';
+        else if (status === '进行中') color = 'blue';
+        else if (status === '已取消') color = 'red';
+        return <Tag color={color}>{status || '待办'}</Tag>;
+      },
+      sorter: (a: any, b: any) => {
+        const order = { 已完成: 4, 进行中: 3, 待办: 2, 已取消: 1 };
+        return (order[a.status as keyof typeof order] || 1) - (order[b.status as keyof typeof order] || 1);
       },
     },
     {
@@ -403,6 +425,18 @@ export const TaskCenter: React.FC = () => {
                       <Select.Option value="中">中</Select.Option>
                       <Select.Option value="普通">普通</Select.Option>
                     </Select>
+                    <Select
+                      placeholder="任务状态"
+                      style={{ width: 100 }}
+                      allowClear
+                      value={statusFilter}
+                      onChange={(value) => setStatusFilter(value)}
+                    >
+                      <Select.Option value="待办">待办</Select.Option>
+                      <Select.Option value="进行中">进行中</Select.Option>
+                      <Select.Option value="已完成">已完成</Select.Option>
+                      <Select.Option value="已取消">已取消</Select.Option>
+                    </Select>
                     <Button icon={<ReloadOutlined />} onClick={handleRefreshTasks} title="刷新任务列表" size="small">
                       刷新
                     </Button>
@@ -465,6 +499,7 @@ export const TaskCenter: React.FC = () => {
                 startDate: editingTask.startDate ? dayjs(editingTask.startDate) : dayjs(),
                 deadline: editingTask.deadline ? dayjs(editingTask.deadline) : dayjs().add(7, 'day'),
                 urgency: editingTask.urgency,
+                status: editingTask.status,
                 taskDetails: editingTask.taskDetails || '',
               }
             : undefined

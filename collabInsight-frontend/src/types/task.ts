@@ -33,6 +33,7 @@ export interface Task {
     role: string;
   };
   urgency: string;
+  status: string;
   startDate?: string;
   deadline?: string;
   createdAt: string;

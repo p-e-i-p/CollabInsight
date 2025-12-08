@@ -155,7 +155,7 @@ router.post('/:projectId/tasks', protect, async (req, res) => {
   try {
     const { projectId } = req.params;
     const userId = req.user.id;
-    const { taskName, taskDetails, assignee, startDate, deadline, urgency } = req.body;
+    const { taskName, taskDetails, assignee, startDate, deadline, urgency, status } = req.body;
 
     const access = await ensureProjectAccess(projectId, userId);
     if (!access.allowed) {
@@ -191,6 +191,7 @@ router.post('/:projectId/tasks', protect, async (req, res) => {
       startDate,
       deadline,
       urgency,
+      status: status || '待办',
     });
 
     const populated = await Task.findById(task._id)
@@ -209,7 +210,7 @@ router.put('/tasks/:taskId', protect, async (req, res) => {
   try {
     const { taskId } = req.params;
     const userId = req.user.id;
-    const { taskName, taskDetails, assignee, startDate, deadline, urgency } = req.body;
+    const { taskName, taskDetails, assignee, startDate, deadline, urgency, status } = req.body;
 
     const task = await Task.findById(taskId).populate('project');
     if (!task) {
@@ -247,6 +248,7 @@ router.put('/tasks/:taskId', protect, async (req, res) => {
     if (startDate !== undefined) task.startDate = startDate;
     if (deadline !== undefined) task.deadline = deadline;
     if (urgency !== undefined) task.urgency = urgency;
+    if (status !== undefined) task.status = status;
 
     await task.save();
 

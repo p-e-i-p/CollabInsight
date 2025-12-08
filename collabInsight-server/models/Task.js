@@ -33,6 +33,11 @@ const TaskSchema = new mongoose.Schema(
       enum: ['高', '中', '普通'],
       default: '普通',
     },
+    status: {
+      type: String,
+      enum: ['待办', '进行中', '已完成', '已取消'],
+      default: '待办',
+    },
     startDate: {
       type: Date,
     },

@@ -17,6 +17,7 @@ interface TaskFormProps {
     startDate: dayjs.Dayjs;
     deadline: dayjs.Dayjs;
     urgency: string;
+    status: string;
     taskDetails: string;
   };
   isEdit?: boolean;
@@ -73,6 +74,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           startDate: dayjs(),
           deadline: dayjs().add(7, 'day'),
           urgency: '普通',
+          status: '待办',
           taskDetails: ''
         });
       }
@@ -103,6 +105,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       destroyOnClose={true}
       width={700}
       styles={{ body: { padding: '20px' } }}
+      style={{ top: 20 }}
     >
       <Form
         form={form}
@@ -218,6 +221,24 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             <Select.Option value="高">高</Select.Option>
             <Select.Option value="中">中</Select.Option>
             <Select.Option value="普通">普通</Select.Option>
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          name="status"
+          label="任务状态"
+          rules={[{ required: true, message: '请选择任务状态' }]}
+          style={{ marginBottom: 16 }}
+        >
+          <Select
+            placeholder="请选择任务状态"
+            size="large"
+            style={{ borderRadius: 6 }}
+          >
+            <Select.Option value="待办">待办</Select.Option>
+            <Select.Option value="进行中">进行中</Select.Option>
+            <Select.Option value="已完成">已完成</Select.Option>
+            <Select.Option value="已取消">已取消</Select.Option>
           </Select>
         </Form.Item>
 

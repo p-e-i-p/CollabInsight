@@ -30,7 +30,7 @@ const { Header, Content, Sider } = Layout;
 
 // 创建HomeContext
 const HomeContext = createContext({
-  setShowProfileCard: (show: boolean) => {}
+  setShowProfileCard: (show: boolean) => {},
 });
 
 export const Home: React.FC = () => {
@@ -40,14 +40,22 @@ export const Home: React.FC = () => {
   const [form] = Form.useForm();
   const [userAvatar, setUserAvatar] = useState<string>('');
   const [menuItems, setMenuItems] = useState<any[]>(() => generateMenuItems());
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([window.location.pathname.split('/')[1] || '/']);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([
+    window.location.pathname.split('/')[1] || '/',
+  ]);
 
   // 获取用户角色并生成菜单项
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const profile = await getUserProfile();
-        setUserAvatar(profile.avatar ? (profile.avatar.startsWith('http') ? profile.avatar : `http://localhost:3000${profile.avatar}`) : '');
+        setUserAvatar(
+          profile.avatar
+            ? profile.avatar.startsWith('http')
+              ? profile.avatar
+              : `http://localhost:5000${profile.avatar}`
+            : ''
+        );
         // 保存用户角色到localStorage
         localStorage.setItem('userRole', profile.role);
         console.log('用户角色:', profile.role);
@@ -59,25 +67,29 @@ export const Home: React.FC = () => {
     };
 
     fetchUserProfile();
-  
 
-    
     // 监听头像更新事件
     const handleAvatarUpdated = (avatarUrl: string) => {
-      setUserAvatar(avatarUrl ? (avatarUrl.startsWith('http') ? avatarUrl : `http://localhost:3000${avatarUrl}`) : '');
+      setUserAvatar(
+        avatarUrl
+          ? avatarUrl.startsWith('http')
+            ? avatarUrl
+            : `http://localhost:${avatarUrl}`
+          : ''
+      );
     };
-    
+
     eventBus.on(Events.USER_AVATAR_UPDATED, handleAvatarUpdated);
-    
+
     // 清理函数
     return () => {
       eventBus.off(Events.USER_AVATAR_UPDATED, handleAvatarUpdated);
     };
   }, []);
-  
+
   // 更新用户头像的函数
   const updateUserAvatar = (avatarUrl: string) => {
-    setUserAvatar(avatarUrl ? `http://localhost:3000${avatarUrl}` : '');
+    setUserAvatar(avatarUrl ? `http://localhost:5000${avatarUrl}` : '');
   };
 
   // 实时时间更新
@@ -113,10 +125,10 @@ export const Home: React.FC = () => {
 
     // 初始化设置
     handlePathChange();
-    
+
     // 监听popstate事件（浏览器前进/后退）
     window.addEventListener('popstate', handlePathChange);
-    
+
     return () => {
       window.removeEventListener('popstate', handlePathChange);
     };
@@ -124,7 +136,7 @@ export const Home: React.FC = () => {
 
   const handelMenuClick: MenuProps['onClick'] = ({ key }) => {
     const path = key === '/' ? key : `/${key}`;
-    return window.location.href = path;
+    return (window.location.href = path);
   };
 
   // 处理下拉菜单点击
@@ -133,19 +145,23 @@ export const Home: React.FC = () => {
       // 清除token和用户角色信息
       localStorage.removeItem('token');
       localStorage.removeItem('userRole');
-      
+
       // 通知其他已打开的页面用户已退出登录
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'userRole',
-        newValue: null,
-        url: window.location.href
-      }));
-      
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: 'userRole',
+          newValue: null,
+          url: window.location.href,
+        })
+      );
+
       // 触发自定义事件，以便其他组件能够响应用户退出登录
-      window.dispatchEvent(new CustomEvent('userRoleChanged', {
-        detail: { role: null }
-      }));
-      
+      window.dispatchEvent(
+        new CustomEvent('userRoleChanged', {
+          detail: { role: null },
+        })
+      );
+
       window.location.href = '/login';
     } else if (key === 'change-password') {
       setShowPasswordCard(true);
@@ -182,7 +198,7 @@ export const Home: React.FC = () => {
 
   // 提供HomeContext给子组件
   const contextValue = {
-    setShowProfileCard
+    setShowProfileCard,
   };
 
   // 关闭个人中心卡片
@@ -192,7 +208,7 @@ export const Home: React.FC = () => {
     const fetchUserProfile = async () => {
       try {
         const profile = await getUserProfile();
-        setUserAvatar(profile.avatar ? `http://localhost:3000${profile.avatar}` : '');
+        setUserAvatar(profile.avatar ? `http://localhost:5000${profile.avatar}` : '');
       } catch (error) {
         console.error('重新获取用户头像失败', error);
       }
@@ -204,126 +220,127 @@ export const Home: React.FC = () => {
   return (
     <HomeContext.Provider value={contextValue}>
       <Layout className="h-screen overflow-hidden flex flex-col h-full">
-      <Sider width={250} theme="light" className="m-5 rounded-xl w-20000 ">
-        <div className="flex items-center justify-center mb-1 p-5" onClick={() => window.location.href = '/'}>
-          <FrownFilled className=" text-3xl mr-3" />
-          <span className="font-bold font-serif text-xl ">CollabInsight</span>
-        </div>
-        <Menu
-          onClick={handelMenuClick}
-          selectedKeys={selectedKeys}
-          mode="inline"
-          items={menuItems}
-        />
-      </Sider>
-      <Layout className="flex flex-col h-full">
-        <Header className="mt-5  mr-5 rounded-xl h-18 px-6 bg-white flex items-center justify-between shadow-sm border-b">
-          <div className="text-lg font-medium"></div>
-          <div className="flex items-center space-x-4">
-            <div className="text-gray-600 mr-4 font-medium text-lg">{currentTime}</div>
-            <Avatar
-              src={userAvatar}
-              icon={<UserOutlined />}
-              size={'large'}
-              className=" transition-all duration-300 hover:scale-110"
-              style={{ cursor: 'pointer' }}
-              onClick={handleAvatarClick}
-            />
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    key: 'change-password',
-                    icon: <KeyOutlined />,
-                    label: '修改密码',
-                  },
-                  {
-                    key: 'logout',
-                    icon: <LogoutOutlined />,
-                    label: '退出登录',
-                  },
-                ],
-                onClick: handleDropdownClick,
-              }}
-              placement="bottomRight"
-              arrow
-            >
-              <div className="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
-                <DownOutlined />
-              </div>
-            </Dropdown>
+        <Sider width={250} theme="light" className="m-5 rounded-xl w-20000 ">
+          <div
+            className="flex items-center justify-center mb-1 p-5"
+            onClick={() => (window.location.href = '/')}
+          >
+            <FrownFilled className=" text-3xl mr-3" />
+            <span className="font-bold font-serif text-xl ">CollabInsight</span>
           </div>
-        </Header>
-        {/* 只修改 Content 区域：移除 overflow-hidden，子容器用 h-[calc(100%-1.25rem)] 替代 h-full */}
-        <Content className="flex-1 mb-5 mr-5 ">
-          <div className="bg-white rounded-xl shadow-sm mt-5 h-[calc(100%-1.25rem)] overflow-y-auto">
-            <Outlet></Outlet>
-          </div>
-        </Content>
-      </Layout>
-
-      {/* 修改密码表单弹窗 */}
-      {showPasswordCard && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-          <Card className=" col-span-1  text-center  shadow-xl rounded-lg border-2 backdrop-blur-sm bg-white/95 max-w-[90vw] w-[370px] h-[450px] ">
-            <Form form={form} onFinish={handlePasswordChange}>
-              <div className="text-xl pb-4 my-3">修改密码</div>
-              <Form.Item name="oldPassword" rules={[{ required: true, message: '请输入旧密码' }]}>
-                <Input.Password placeholder="请输入原密码" size="large" />
-              </Form.Item>
-              <Form.Item
-                name="newPassword"
-                rules={[
-                  { required: true, message: '请输入新密码' },
-                  { min: 6, message: '密码长度至少为6位' },
-                ]}
-              >
-                <Input.Password placeholder="请输入新密码" size="large" />
-              </Form.Item>
-              <Form.Item
-                name="confirmPassword"
-                dependencies={['newPassword']}
-                rules={[
-                  { required: true, message: '请确认新密码' },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      if (!value || getFieldValue('newPassword') === value) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(new Error('两次输入的密码不一致'));
+          <Menu
+            onClick={handelMenuClick}
+            selectedKeys={selectedKeys}
+            mode="inline"
+            items={menuItems}
+          />
+        </Sider>
+        <Layout className="flex flex-col h-full">
+          <Header className="mt-5  mr-5 rounded-xl h-18 px-6 bg-white flex items-center justify-between shadow-sm border-b">
+            <div className="text-lg font-medium"></div>
+            <div className="flex items-center space-x-4">
+              <div className="text-gray-600 mr-4 font-medium text-lg">{currentTime}</div>
+              <Avatar
+                src={userAvatar}
+                icon={<UserOutlined />}
+                size={'large'}
+                className=" transition-all duration-300 hover:scale-110"
+                style={{ cursor: 'pointer' }}
+                onClick={handleAvatarClick}
+              />
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: 'change-password',
+                      icon: <KeyOutlined />,
+                      label: '修改密码',
                     },
-                  }),
-                ]}
+                    {
+                      key: 'logout',
+                      icon: <LogoutOutlined />,
+                      label: '退出登录',
+                    },
+                  ],
+                  onClick: handleDropdownClick,
+                }}
+                placement="bottomRight"
+                arrow
               >
-                <Input.Password placeholder="请确认新密码" size="large" />
-              </Form.Item>
-              <Form.Item>
-                <div className="flex flex-col space-y-3 mt-6">
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    autoInsertSpace
-                    block
-                    size="large"
-                    loading={false}
-                  >
-                    确认
-                  </Button>
-                  <Button type="default" onClick={handleCancel} block size="large">
-                    取消
-                  </Button>
+                <div className="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
+                  <DownOutlined />
                 </div>
-              </Form.Item>
-            </Form>
-          </Card>
-        </div>
-      )}
+              </Dropdown>
+            </div>
+          </Header>
+          {/* 只修改 Content 区域：移除 overflow-hidden，子容器用 h-[calc(100%-1.25rem)] 替代 h-full */}
+          <Content className="flex-1 mb-5 mr-5 ">
+            <div className="bg-white rounded-xl shadow-sm mt-5 h-[calc(100%-1.25rem)] overflow-y-auto">
+              <Outlet></Outlet>
+            </div>
+          </Content>
+        </Layout>
 
-      {/* 个人中心卡片 */}
-      {showProfileCard && (
-        <ProfileCard onClose={closeProfileCard} />
-      )}
-    </Layout>
+        {/* 修改密码表单弹窗 */}
+        {showPasswordCard && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+            <Card className=" col-span-1  text-center  shadow-xl rounded-lg border-2 backdrop-blur-sm bg-white/95 max-w-[90vw] w-[370px] h-[450px] ">
+              <Form form={form} onFinish={handlePasswordChange}>
+                <div className="text-xl pb-4 my-3">修改密码</div>
+                <Form.Item name="oldPassword" rules={[{ required: true, message: '请输入旧密码' }]}>
+                  <Input.Password placeholder="请输入原密码" size="large" />
+                </Form.Item>
+                <Form.Item
+                  name="newPassword"
+                  rules={[
+                    { required: true, message: '请输入新密码' },
+                    { min: 6, message: '密码长度至少为6位' },
+                  ]}
+                >
+                  <Input.Password placeholder="请输入新密码" size="large" />
+                </Form.Item>
+                <Form.Item
+                  name="confirmPassword"
+                  dependencies={['newPassword']}
+                  rules={[
+                    { required: true, message: '请确认新密码' },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        if (!value || getFieldValue('newPassword') === value) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(new Error('两次输入的密码不一致'));
+                      },
+                    }),
+                  ]}
+                >
+                  <Input.Password placeholder="请确认新密码" size="large" />
+                </Form.Item>
+                <Form.Item>
+                  <div className="flex flex-col space-y-3 mt-6">
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      autoInsertSpace
+                      block
+                      size="large"
+                      loading={false}
+                    >
+                      确认
+                    </Button>
+                    <Button type="default" onClick={handleCancel} block size="large">
+                      取消
+                    </Button>
+                  </div>
+                </Form.Item>
+              </Form>
+            </Card>
+          </div>
+        )}
+
+        {/* 个人中心卡片 */}
+        {showProfileCard && <ProfileCard onClose={closeProfileCard} />}
+      </Layout>
     </HomeContext.Provider>
   );
 };
