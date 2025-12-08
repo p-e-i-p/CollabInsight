@@ -10,6 +10,7 @@ const connectDB = require('./config/db');
 // 路由
 const userRoutes = require('./routes/users');
 const registerRoutes = require('./routes/register');
+const projectRoutes = require('./routes/projects');
 
 // 初始化 Express 应用
 const app = express();
@@ -29,6 +30,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api', userRoutes);
 app.use('/api/userInfo', userRoutes);
 app.use('/api/register', registerRoutes);
+app.use('/api/projects', projectRoutes);
 
 // 根路由
 app.get('/', (req, res) => {

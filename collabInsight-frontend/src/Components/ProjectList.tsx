@@ -28,7 +28,9 @@ interface ProjectListProps {
   // 删除项目处理函数
   onDeleteProject?: (projectKey: string) => void;
   // 编辑项目处理函数
-  onEditProject?: (projectKey: string) => void;
+  onEditProject?: (projectKey: string, values: any) => Promise<void> | void;
+  onCreateProject?: (values: any) => Promise<void> | void;
+  onSearchMember?: (keyword: string) => Promise<Array<{ _id: string; username: string; role: string }>>;
 }
 
 /**
@@ -43,12 +45,14 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   onSearch,
   onAddTask,
   onDeleteProject,
-  onEditProject
+  onEditProject,
+  onCreateProject,
+  onSearchMember
 }) => {
   // 左侧列表：展示所有项目名称（转换为 ListItem 格式）
   const taskItems: ListItem[] = Object.entries(projectData).map(([key, project]) => ({
     key,
-    label: project.projectName, // 左侧显示项目名称
+    label: project.projectName, // 左侧仅显示项目名称
     actions: {
       onDelete: () => {
         Modal.confirm({
@@ -73,6 +77,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   const [isEditing, setIsEditing] = React.useState(false);
   const [currentEditingKey, setCurrentEditingKey] = React.useState<string | null>(null);
   const [editingProject, setEditingProject] = React.useState<any>(null);
+  const [memberOptions, setMemberOptions] = React.useState<Array<{ label: string; value: string }>>([]);
+  const [memberLoading, setMemberLoading] = React.useState(false);
 
   // 打开新增项目弹窗
   const showProjectModal = () => {
@@ -106,15 +112,39 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   // 使用useEffect处理表单值的设置
   React.useEffect(() => {
     if (isProjectModalVisible && isEditing && editingProject) {
+      // 预填成员选项，确保已有成员展示为可删除标签
+      const memberOpts = (editingProject.members || []).map((m: any) => {
+        const value = typeof m === 'string' ? m : m._id;
+        const label = typeof m === 'string' ? m : m.username || m._id;
+        return { label, value };
+      });
+      setMemberOptions(memberOpts);
+
       projectForm.setFieldsValue({
         projectName: editingProject.projectName,
         projectDesc: editingProject.projectDesc,
         status: editingProject.status,
         priority: editingProject.priority,
         dateRange: editingProject.deadline ? [dayjs(editingProject.deadline), dayjs(editingProject.deadline)] : null,
+        members: (editingProject.members || []).map((m: any) => (typeof m === 'string' ? m : m._id)),
       });
     }
-  }, [isProjectModalVisible, isEditing, editingProject]);
+  }, [isProjectModalVisible, isEditing, editingProject, projectForm]);
+
+  const handleSearchMember = async (keyword: string) => {
+    if (!onSearchMember || !keyword) return;
+    try {
+      setMemberLoading(true);
+      const list = await onSearchMember(keyword);
+      const options = (list || []).map((u) => ({
+        label: `${u.username} (${u.role === 'admin' ? '组长' : '成员'})`,
+        value: u._id,
+      }));
+      setMemberOptions(options);
+    } finally {
+      setMemberLoading(false);
+    }
+  };
 
   // 关闭项目弹窗
   const handleProjectModalCancel = () => {
@@ -139,10 +169,10 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   };
 
   // 提交新增/编辑项目
-  const handleProjectModalOk = () => {
+  const handleProjectModalOk = async () => {
     projectForm
       .validateFields()
-      .then((values) => {
+      .then(async (values) => {
         const projectName = values.projectName;
         
         // 处理日期范围
@@ -158,20 +188,21 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         }
         
         // 创建项目对象
-        const projectData = {
+        const payload = {
           projectName,
           projectDesc: values.projectDesc || '',
           status: values.status || '未开始',
           priority: values.priority || '普通',
           deadline,
-          tasks: []
+          tasks: [],
+          members: values.members || [],
         };
 
         // 如果是编辑模式
         if (isEditing && currentEditingKey) {
           // 调用父组件传递的编辑处理函数
           if (onEditProject) {
-            onEditProject(currentEditingKey, projectData);
+            await onEditProject(currentEditingKey, payload);
           }
           
           // 关闭弹窗
@@ -181,11 +212,9 @@ export const ProjectList: React.FC<ProjectListProps> = ({
           alert(`项目 "${projectName}" 编辑成功！`);
         } else {
           // 新增模式
-          // 生成项目ID
-          const projectId = `p${Date.now()}`;
-          
-          // 调用父组件传递的新增处理函数
-          if (onAdd) {
+          if (onCreateProject) {
+            await onCreateProject(payload);
+          } else if (onAdd) {
             onAdd();
           }
           
@@ -340,6 +369,27 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                 });
               }
             }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="members"
+          label="项目成员（可多选）"
+          style={{ marginBottom: 16 }}
+        >
+          <AntSelect
+            mode="multiple"
+            showSearch
+            filterOption={false}
+            placeholder="搜索用户名或ID添加成员"
+            notFoundContent={memberLoading ? '搜索中...' : '暂无结果'}
+            options={memberOptions}
+            onSearch={handleSearchMember}
+            allowClear
+            size="large"
+            style={{ borderRadius: 6 }}
+            // 让已选成员以标签形式展示，可点击 × 移除
+            maxTagCount="responsive"
           />
         </Form.Item>
 

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, DatePicker, Select, Button } from 'antd';
+import { Modal, Form, Input, DatePicker, Select } from 'antd';
 import dayjs from 'dayjs';
 import type { FormInstance } from 'antd/es/form';
 
@@ -11,6 +11,16 @@ interface TaskFormProps {
   currentUserRole: string;
   currentUser: { id: string; name: string; role: string };
   userData: Record<string, { name: string; role: string }>;
+  initialValues?: {
+    taskName: string;
+    assignee: string;
+    startDate: dayjs.Dayjs;
+    deadline: dayjs.Dayjs;
+    urgency: string;
+    taskDetails: string;
+  };
+  isEdit?: boolean;
+  onSearchUser?: (keyword: string) => Promise<void>;
 }
 
 /**
@@ -24,7 +34,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   projectKey,
   currentUserRole,
   currentUser,
-  userData
+  userData,
+  initialValues,
+  isEdit = false,
 }) => {
   const [form] = Form.useForm();
   const taskFormRef = React.useRef<FormInstance>(null);
@@ -48,25 +60,24 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     return taskAssigneeOptions;
   }, [taskAssigneeOptions, currentUserRole, currentUser.id]);
 
-  // 重置表单
-  const resetForm = () => {
-    form.resetFields();
-    form.setFieldsValue({
-      taskName: '',
-      assignee: currentUser.id, // 默认分配给当前用户
-      startDate: dayjs(),
-      deadline: dayjs().add(7, 'day'),
-      urgency: '普通',
-      taskDetails: ''
-    });
-  };
-
-  // 当模态框可见性变化时，重置表单
+  // 当模态框可见性变化时，填充初始值
   useEffect(() => {
     if (visible) {
-      resetForm();
+      form.resetFields();
+      if (initialValues) {
+        form.setFieldsValue(initialValues);
+      } else {
+        form.setFieldsValue({
+          taskName: '',
+          assignee: currentUser.id, // 默认分配给当前用户
+          startDate: dayjs(),
+          deadline: dayjs().add(7, 'day'),
+          urgency: '普通',
+          taskDetails: ''
+        });
+      }
     }
-  }, [visible]);
+  }, [visible, initialValues, form, currentUser.id]);
 
   // 处理表单提交
   const handleOk = () => {
@@ -85,7 +96,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   return (
     <Modal
-      title="添加新任务"
+      title={isEdit ? '编辑任务' : '添加新任务'}
       open={visible}
       onOk={handleOk}
       onCancel={onCancel}

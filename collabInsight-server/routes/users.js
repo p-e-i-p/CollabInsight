@@ -267,6 +267,30 @@ router.post('/avatar', protect, upload.single('avatar'), async (req, res) => {
   }
 });
 
+// @desc    搜索用户（用户名或ID，模糊），用于项目成员选择
+// @route   GET /search
+// @access  私有(管理员/组长)
+router.get('/search', protect, async (req, res) => {
+  try {
+    const { keyword = '' } = req.query;
+    const regex = new RegExp(keyword, 'i');
+    const conditions = [{ username: regex }];
+
+    // 仅当 keyword 是合法 ObjectId 时才按 _id 查询，避免 CastError
+    if (mongoose.Types.ObjectId.isValid(keyword)) {
+      conditions.push({ _id: keyword });
+    }
+
+    const users = await User.find({ $or: conditions })
+      .select('_id username role')
+      .limit(20);
+    res.status(200).json({ code: 200, data: users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: '搜索用户失败' });
+  }
+});
+
 // @desc    获取所有用户
 // @route   GET /users
 // @access  私有(管理员)
