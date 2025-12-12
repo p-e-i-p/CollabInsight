@@ -3,7 +3,7 @@ import { Modal, Form, Input, DatePicker, Select } from 'antd';
 import dayjs from 'dayjs';
 import type { FormInstance } from 'antd/es/form';
 
-interface TaskFormProps {
+interface BugFormProps {
   visible: boolean;
   onCancel: () => void;
   onOk: (values: any) => void;
@@ -28,7 +28,7 @@ interface TaskFormProps {
  * 任务表单组件
  * 用于添加新任务，支持基于角色的任务分配
  */
-export const TaskForm: React.FC<TaskFormProps> = ({
+export const BugForm: React.FC<BugFormProps> = ({
   visible,
   onCancel,
   onOk,
@@ -40,7 +40,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   isEdit = false,
 }) => {
   const [form] = Form.useForm();
-  const taskFormRef = React.useRef<FormInstance>(null);
+  const BugFormRef = React.useRef<FormInstance>(null);
 
   // 初始化任务分配选项
   const taskAssigneeOptions = React.useMemo(() => {
@@ -111,9 +111,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       <Form
         form={form}
         layout="vertical"
-        name="taskForm"
+        name="BugForm"
         style={{ maxWidth: '100%' }}
-        ref={taskFormRef}
+        ref={BugFormRef}
       >
         <Form.Item
           name="taskName"
@@ -263,4 +263,4 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   );
 };
 
-export default TaskForm;
+export default BugForm;

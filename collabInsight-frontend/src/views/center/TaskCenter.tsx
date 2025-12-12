@@ -6,7 +6,16 @@ import dayjs from 'dayjs';
 import { ProjectList } from '@/Components/ProjectList';
 import TaskForm from './TaskForm';
 import type { Project, Task } from '@/types/task';
-import { createProject, createTask, deleteTask, fetchProjects, fetchTasksByProject, searchUser, searchUserForProject, updateTask } from '@/request/api/task';
+import {
+  createProject,
+  createTask,
+  deleteTask,
+  fetchProjects,
+  fetchTasksByProject,
+  searchUser,
+  searchUserForProject,
+  updateTask,
+} from '@/request/api/task';
 import { getUserProfile } from '@/request/api/user/profile';
 
 interface AssigneeMap {
@@ -24,7 +33,9 @@ export const TaskCenter: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; role: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; role: string } | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
 
   const selectedProject = useMemo(
@@ -65,7 +76,11 @@ export const TaskCenter: React.FC = () => {
   const fetchUser = async () => {
     try {
       const profile = await getUserProfile();
-      setCurrentUser({ id: profile._id, name: profile.username, role: profile.role === 'admin' ? '组长' : '成员' });
+      setCurrentUser({
+        id: profile._id,
+        name: profile.username,
+        role: profile.role === 'admin' ? '组长' : '成员',
+      });
     } catch (error) {
       console.error(error);
       message.error('获取用户信息失败');
@@ -121,7 +136,8 @@ export const TaskCenter: React.FC = () => {
     }
     if (taskDetailsFilter) {
       data = data.filter(
-        (t) => t.taskDetails && t.taskDetails.toLowerCase().includes(taskDetailsFilter.toLowerCase())
+        (t) =>
+          t.taskDetails && t.taskDetails.toLowerCase().includes(taskDetailsFilter.toLowerCase())
       );
     }
     if (urgencyFilter) {
@@ -230,7 +246,7 @@ export const TaskCenter: React.FC = () => {
       dataIndex: 'taskName',
       key: 'taskName',
       ellipsis: true,
-      width: '200px',
+      width: 150,
     },
     {
       title: '执行人',
@@ -245,7 +261,8 @@ export const TaskCenter: React.FC = () => {
       key: 'startDate',
       width: 120,
       render: (date: string) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
-      sorter: (a, b) => new Date(a.startDate || '').getTime() - new Date(b.startDate || '').getTime(),
+      sorter: (a, b) =>
+        new Date(a.startDate || '').getTime() - new Date(b.startDate || '').getTime(),
     },
     {
       title: '截止日期',
@@ -255,14 +272,7 @@ export const TaskCenter: React.FC = () => {
       render: (date: string) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
       sorter: (a, b) => new Date(a.deadline || '').getTime() - new Date(b.deadline || '').getTime(),
     },
-    {
-      title: '任务详情',
-      dataIndex: 'taskDetails',
-      key: 'taskDetails',
-      width: 200,
-      ellipsis: true,
-      render: (details: string) => details || '-',
-    },
+
     {
       title: '紧急程度',
       dataIndex: 'urgency',
@@ -276,7 +286,10 @@ export const TaskCenter: React.FC = () => {
       },
       sorter: (a: any, b: any) => {
         const order = { 高: 3, 中: 2, 普通: 1 };
-        return (order[a.urgency as keyof typeof order] || 1) - (order[b.urgency as keyof typeof order] || 1);
+        return (
+          (order[a.urgency as keyof typeof order] || 1) -
+          (order[b.urgency as keyof typeof order] || 1)
+        );
       },
     },
     {
@@ -293,13 +306,18 @@ export const TaskCenter: React.FC = () => {
       },
       sorter: (a: any, b: any) => {
         const order = { 已完成: 4, 进行中: 3, 待办: 2, 已取消: 1 };
-        return (order[a.status as keyof typeof order] || 1) - (order[b.status as keyof typeof order] || 1);
+        return (
+          (order[a.status as keyof typeof order] || 1) -
+          (order[b.status as keyof typeof order] || 1)
+        );
       },
     },
     {
       title: '操作',
       key: 'action',
-      width: 160,
+      fixed: 'right',
+      width: 130,
+
       render: (_: any, record: Task) => (
         <Space size="middle">
           <Button type="link" size="small" onClick={() => handleEditTask(record)}>
@@ -315,11 +333,9 @@ export const TaskCenter: React.FC = () => {
 
   return (
     <div className="h-full w-full flex flex-col" style={{ padding: '12px' }}>
-      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden" style={{ gap: '16px' }}>
-        <div
-          className="w-full lg:w-1/4 xl:w-1/5 flex-shrink-0"
-          style={{ minWidth: '240px', flexBasis: '240px', display: 'flex', flexDirection: 'column' }}
-        >
+      <div className="flex flex-1 overflow-hidden">
+        {/* 左侧项目列表 */}
+        <div className="flex-shrink-0" style={{ display: 'flex', flexDirection: 'column' }}>
           <ProjectList
             projectData={projectRecord}
             selectedProjectKey={selectedProjectId}
@@ -338,117 +354,126 @@ export const TaskCenter: React.FC = () => {
           />
         </div>
 
-        <div
-          className="p-4 border rounded-lg bg-white overflow-hidden"
-          style={{ flexShrink: 1, minWidth: 0, width: 'calc(100% - 256px)' }}
-        >
-          {selectedProject ? (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-bold text-gray-800">{selectedProject.name}</h2>
-                <div className="grid grid-cols-4 gap-4 mt-3">
-                  <div>
-                    <span className="text-gray-500 text-sm">项目状态：</span>
-                    <span
-                      className={`ml-2 px-2 py-1 rounded text-xs ${
-                        selectedProject.status === '已完成'
-                          ? 'bg-green-100 text-green-800'
-                          : selectedProject.status === '进行中'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {selectedProject.status}
-                    </span>
+        {/* 右侧内容区域 */}
+        <div className="flex-1 flex flex-col overflow-hidden ml-4">
+          <div className="p-4 border rounded-lg bg-white flex-1 overflow-hidden">
+            {selectedProject ? (
+              <div className="h-full flex flex-col">
+                {/* 项目信息部分 */}
+                <div className="flex-shrink-0">
+                  <div className="grid grid-cols-4 gap-4 mt-3">
+                    <div>
+                      <span className="text-gray-500 text-xs">项目状态：</span>
+                      <span
+                        className={`p-1 rounded text-xs ${
+                          selectedProject.status === '已完成'
+                            ? 'bg-green-100 text-green-800'
+                            : selectedProject.status === '进行中'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {selectedProject.status}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 text-xs">优先级：</span>
+                      <span
+                        className={`p-1 rounded text-xs ${
+                          selectedProject.priority === '高'
+                            ? 'bg-red-100 text-red-800'
+                            : selectedProject.priority === '中'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {selectedProject.priority}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 text-xs">截止日期：</span>
+                      <span className="ml-2 text-xs">
+                        {selectedProject.deadline
+                          ? dayjs(selectedProject.deadline).format('YYYY-MM-DD')
+                          : '-'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 text-xs">项目负责人：</span>
+                      <span className="ml-2 text-xs">
+                        {selectedProject.leader?.username || '未指定'}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-gray-500 text-sm">优先级：</span>
-                    <span
-                      className={`ml-2 px-2 py-1 rounded text-xs ${
-                        selectedProject.priority === '高'
-                          ? 'bg-red-100 text-red-800'
-                          : selectedProject.priority === '中'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {selectedProject.priority}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 text-sm">截止日期：</span>
-                    <span className="ml-2 text-sm">
-                      {selectedProject.deadline ? dayjs(selectedProject.deadline).format('YYYY-MM-DD') : '-'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 text-sm">项目负责人：</span>
-                    <span className="ml-2 text-sm">
-                      {selectedProject.leader?.username || '未指定'}
-                    </span>
-                  </div>
-                </div>
-                <p className="mt-3 text-gray-600 text-sm p-3 border rounded bg-gray-50">
-                  {selectedProject.description || '暂无描述'}
-                </p>
-              </div>
-
-              <div className="flex flex-col h-full" style={{ minHeight: 0, overflow: 'hidden' }}>
-                <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'nowrap', gap: '8px' }}>
-                  <h3 className="text-lg font-semibold whitespace-nowrap">任务列表</h3>
-                  <div
-                    className="flex items-center"
-                    style={{ flexWrap: 'nowrap', gap: '8px', overflow: 'hidden', minWidth: 0 }}
-                  >
-                    <Input
-                      placeholder="搜索任务名称"
-                      prefix={<SearchOutlined />}
-                      value={searchText}
-                      onChange={(e) => setSearchText(e.target.value)}
-                      style={{ width: 140 }}
-                    />
-                    <Input
-                      placeholder="任务详情"
-                      prefix={<SearchOutlined />}
-                      value={taskDetailsFilter}
-                      onChange={(e) => setTaskDetailsFilter(e.target.value)}
-                      style={{ width: 120 }}
-                    />
-                    <Select
-                      placeholder="紧急程度"
-                      style={{ width: 100 }}
-                      allowClear
-                      value={urgencyFilter}
-                      onChange={(value) => setUrgencyFilter(value)}
-                    >
-                      <Select.Option value="高">高</Select.Option>
-                      <Select.Option value="中">中</Select.Option>
-                      <Select.Option value="普通">普通</Select.Option>
-                    </Select>
-                    <Select
-                      placeholder="任务状态"
-                      style={{ width: 100 }}
-                      allowClear
-                      value={statusFilter}
-                      onChange={(value) => setStatusFilter(value)}
-                    >
-                      <Select.Option value="待办">待办</Select.Option>
-                      <Select.Option value="进行中">进行中</Select.Option>
-                      <Select.Option value="已完成">已完成</Select.Option>
-                      <Select.Option value="已取消">已取消</Select.Option>
-                    </Select>
-                    <Button icon={<ReloadOutlined />} onClick={handleRefreshTasks} title="刷新任务列表" size="small">
-                      刷新
-                    </Button>
-                    <Button type="primary" icon={<PlusOutlined />} onClick={handleAddTask} size="small">
-                      添加
-                    </Button>
-                    <div style={{ flexShrink: 0, width: 1 }}></div>
-                  </div>
+                  <p className="mt-3 text-gray-600 text-xs p-3 border rounded bg-gray-50">
+                    {selectedProject.description || '暂无描述'}
+                  </p>
                 </div>
 
-                <div className="flex flex-col h-full">
-                  <div className="flex-grow overflow-auto" style={{ minHeight: 0 }}>
+                {/* 任务列表部分 */}
+                <div className="flex-1 flex flex-col  mt-6">
+                  {/* 搜索和操作栏 */}
+                  <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                    <h3 className="text-sm font-semibold">任务列表</h3>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="搜索任务名称"
+                        prefix={<SearchOutlined />}
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        style={{ width: 140 }}
+                      />
+                      <Input
+                        placeholder="任务详情"
+                        prefix={<SearchOutlined />}
+                        value={taskDetailsFilter}
+                        onChange={(e) => setTaskDetailsFilter(e.target.value)}
+                        style={{ width: 120 }}
+                      />
+                      <Select
+                        placeholder="紧急程度"
+                        style={{ width: 100 }}
+                        allowClear
+                        value={urgencyFilter}
+                        onChange={(value) => setUrgencyFilter(value)}
+                      >
+                        <Select.Option value="高">高</Select.Option>
+                        <Select.Option value="中">中</Select.Option>
+                        <Select.Option value="普通">普通</Select.Option>
+                      </Select>
+                      <Select
+                        placeholder="任务状态"
+                        style={{ width: 100 }}
+                        allowClear
+                        value={statusFilter}
+                        onChange={(value) => setStatusFilter(value)}
+                      >
+                        <Select.Option value="待办">待办</Select.Option>
+                        <Select.Option value="进行中">进行中</Select.Option>
+                        <Select.Option value="已完成">已完成</Select.Option>
+                        <Select.Option value="已取消">已取消</Select.Option>
+                      </Select>
+                      <Button
+                        icon={<ReloadOutlined />}
+                        onClick={handleRefreshTasks}
+                        title="刷新任务列表"
+                        size="small"
+                      >
+                        刷新
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleAddTask}
+                        size="small"
+                      >
+                        添加
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* 表格部分 */}
+                  <div className="flex-1 overflow-auto">
                     <Table
                       loading={loading}
                       columns={taskColumns}
@@ -468,12 +493,12 @@ export const TaskCenter: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
-              <span>请选择左侧项目查看任务</span>
-            </div>
-          )}
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                <span>请选择左侧项目查看任务</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -497,7 +522,9 @@ export const TaskCenter: React.FC = () => {
                 taskName: editingTask.taskName,
                 assignee: editingTask.assignee?._id,
                 startDate: editingTask.startDate ? dayjs(editingTask.startDate) : dayjs(),
-                deadline: editingTask.deadline ? dayjs(editingTask.deadline) : dayjs().add(7, 'day'),
+                deadline: editingTask.deadline
+                  ? dayjs(editingTask.deadline)
+                  : dayjs().add(7, 'day'),
                 urgency: editingTask.urgency,
                 status: editingTask.status,
                 taskDetails: editingTask.taskDetails || '',
@@ -505,7 +532,7 @@ export const TaskCenter: React.FC = () => {
             : undefined
         }
         isEdit={!!editingTask}
-         onSearchUser={undefined}
+        onSearchUser={undefined}
       />
     </div>
   );

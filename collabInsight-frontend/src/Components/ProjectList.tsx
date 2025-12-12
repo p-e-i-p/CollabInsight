@@ -1,4 +1,3 @@
-
 import React from 'react';
 import dayjs from 'dayjs';
 import CustomList, { type ListItem } from '@/Components/List';
@@ -7,14 +6,17 @@ import { PlusCircleOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '
 
 interface ProjectListProps {
   // 项目数据
-  projectData: Record<string, {
-    projectName: string;
-    projectDesc: string;
-    status: string;
-    priority: string;
-    deadline: string;
-    tasks: any[];
-  }>;
+  projectData: Record<
+    string,
+    {
+      projectName: string;
+      projectDesc: string;
+      status: string;
+      priority: string;
+      deadline: string;
+      tasks: any[];
+    }
+  >;
   // 当前选中的项目key
   selectedProjectKey: string | null;
   // 项目点击处理函数
@@ -30,7 +32,9 @@ interface ProjectListProps {
   // 编辑项目处理函数
   onEditProject?: (projectKey: string, values: any) => Promise<void> | void;
   onCreateProject?: (values: any) => Promise<void> | void;
-  onSearchMember?: (keyword: string) => Promise<Array<{ _id: string; username: string; role: string }>>;
+  onSearchMember?: (
+    keyword: string
+  ) => Promise<Array<{ _id: string; username: string; role: string }>>;
 }
 
 /**
@@ -47,7 +51,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   onDeleteProject,
   onEditProject,
   onCreateProject,
-  onSearchMember
+  onSearchMember,
 }) => {
   // 左侧列表：展示所有项目名称（转换为 ListItem 格式）
   const taskItems: ListItem[] = Object.entries(projectData).map(([key, project]) => ({
@@ -67,8 +71,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({
       },
       onEdit: () => {
         showEditProjectModal(key);
-      }
-    }
+      },
+    },
   }));
 
   // 新增/编辑项目相关状态
@@ -77,7 +81,9 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   const [isEditing, setIsEditing] = React.useState(false);
   const [currentEditingKey, setCurrentEditingKey] = React.useState<string | null>(null);
   const [editingProject, setEditingProject] = React.useState<any>(null);
-  const [memberOptions, setMemberOptions] = React.useState<Array<{ label: string; value: string }>>([]);
+  const [memberOptions, setMemberOptions] = React.useState<Array<{ label: string; value: string }>>(
+    []
+  );
   const [memberLoading, setMemberLoading] = React.useState(false);
 
   // 打开新增项目弹窗
@@ -103,7 +109,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
       setIsProjectModalVisible(true);
       setIsEditing(true);
       setCurrentEditingKey(projectKey);
-      
+
       // 设置编辑项目数据
       setEditingProject(project);
     }
@@ -125,8 +131,12 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         projectDesc: editingProject.projectDesc,
         status: editingProject.status,
         priority: editingProject.priority,
-        dateRange: editingProject.deadline ? [dayjs(editingProject.deadline), dayjs(editingProject.deadline)] : null,
-        members: (editingProject.members || []).map((m: any) => (typeof m === 'string' ? m : m._id)),
+        dateRange: editingProject.deadline
+          ? [dayjs(editingProject.deadline), dayjs(editingProject.deadline)]
+          : null,
+        members: (editingProject.members || []).map((m: any) =>
+          typeof m === 'string' ? m : m._id
+        ),
       });
     }
   }, [isProjectModalVisible, isEditing, editingProject, projectForm]);
@@ -174,19 +184,19 @@ export const ProjectList: React.FC<ProjectListProps> = ({
       .validateFields()
       .then(async (values) => {
         const projectName = values.projectName;
-        
+
         // 处理日期范围
         let deadline = '';
         if (values.dateRange && values.dateRange.length > 0) {
           // 使用第一个日期作为截止日期
           deadline = dayjs(values.dateRange[0]).format('YYYY-MM-DD');
         }
-        
+
         // 如果没有设置截止日期，使用当前日期
         if (!deadline) {
           deadline = dayjs().format('YYYY-MM-DD');
         }
-        
+
         // 创建项目对象
         const payload = {
           projectName,
@@ -204,10 +214,10 @@ export const ProjectList: React.FC<ProjectListProps> = ({
           if (onEditProject) {
             await onEditProject(currentEditingKey, payload);
           }
-          
+
           // 关闭弹窗
           setIsProjectModalVisible(false);
-          
+
           // 显示成功消息
           alert(`项目 "${projectName}" 编辑成功！`);
         } else {
@@ -217,10 +227,10 @@ export const ProjectList: React.FC<ProjectListProps> = ({
           } else if (onAdd) {
             onAdd();
           }
-          
+
           // 关闭弹窗
           setIsProjectModalVisible(false);
-          
+
           // 显示成功消息
           alert(`项目 "${projectName}" 添加成功！`);
         }
@@ -231,7 +241,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   };
 
   return (
-    <div className="project-list-container">
+    <div className="project-list-container h-full">
       <CustomList
         title="全部项目列表"
         listItems={taskItems}
@@ -260,142 +270,111 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         }}
       />
 
-
-
-    {/* 新增/编辑项目弹窗 */}
-    <Modal
-      title={isEditing ? "编辑项目" : "新增项目"}
-      open={isProjectModalVisible}
-      onOk={handleProjectModalOk}
-      onCancel={handleProjectModalCancel}
-      destroyOnClose={true}
-      width={700}
-      styles={{ body: { padding: '20px' } }}
-    >
-      <Form
-        form={projectForm}
-        layout="vertical"
-        name="projectForm"
-        style={{ maxWidth: '100%' }}
+      {/* 新增/编辑项目弹窗 */}
+      <Modal
+        title={isEditing ? '编辑项目' : '新增项目'}
+        open={isProjectModalVisible}
+        onOk={handleProjectModalOk}
+        onCancel={handleProjectModalCancel}
+        destroyOnClose={true}
+        width={700}
+        centered={true} // 添加这个属性使弹窗居中显示
+        styles={{ body: { padding: '20px' } }}
       >
-        <Form.Item
-          name="projectName"
-          label="项目名称"
-          rules={[{ required: true, message: '请输入项目名称' }]}
-          style={{ marginBottom: 16 }}
-        >
-          <Input
-            placeholder="请输入项目名称"
-            showCount
-            maxLength={50}
-            size="large"
-            style={{ borderRadius: 6 }}
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="projectDesc"
-          label="项目描述"
-          rules={[{ max: 150, message: '项目描述不能超过150字' }]}
-          style={{ marginBottom: 16 }}
-        >
-          <Input.TextArea
-            placeholder="请输入项目描述（最多150字）"
-            showCount
-            maxLength={150}
-            rows={4}
-            style={{ borderRadius: 6, resize: 'vertical' }}
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="status"
-          label="项目状态"
-          style={{ marginBottom: 16 }}
-        >
-          <AntSelect
-            placeholder="请选择项目状态"
-            size="large"
-            style={{ borderRadius: 6 }}
+        <Form form={projectForm} layout="vertical" name="projectForm" style={{ maxWidth: '100%' }}>
+          <Form.Item
+            name="projectName"
+            label="项目名称"
+            rules={[{ required: true, message: '请输入项目名称' }]}
+            style={{ marginBottom: 16 }}
           >
-            <AntSelect.Option value="未开始">未开始</AntSelect.Option>
-            <AntSelect.Option value="进行中">进行中</AntSelect.Option>
-            <AntSelect.Option value="已完成">已完成</AntSelect.Option>
-          </AntSelect>
-        </Form.Item>
+            <Input
+              placeholder="请输入项目名称"
+              showCount
+              maxLength={50}
+              size="middle"
+              style={{ borderRadius: 6 }}
+            />
+          </Form.Item>
 
-        <Form.Item
-          name="priority"
-          label="项目优先级"
-          style={{ marginBottom: 16 }}
-        >
-          <AntSelect
-            placeholder="请选择项目优先级"
-            size="large"
-            style={{ borderRadius: 6 }}
+          <Form.Item
+            name="projectDesc"
+            label="项目描述"
+            rules={[{ max: 150, message: '项目描述不能超过150字' }]}
+            style={{ marginBottom: 16 }}
           >
-            <AntSelect.Option value="高">高</AntSelect.Option>
-            <AntSelect.Option value="中">中</AntSelect.Option>
-            <AntSelect.Option value="普通">普通</AntSelect.Option>
-            <AntSelect.Option value="低">低</AntSelect.Option>
-          </AntSelect>
-        </Form.Item>
+            <Input.TextArea
+              placeholder="请输入项目描述（最多150字）"
+              showCount
+              maxLength={150}
+              rows={4}
+              style={{ borderRadius: 6, resize: 'vertical' }}
+            />
+          </Form.Item>
 
+          <Form.Item name="status" label="项目状态" style={{ marginBottom: 16 }}>
+            <AntSelect placeholder="请选择项目状态" size="middle" style={{ borderRadius: 6 }}>
+              <AntSelect.Option value="未开始">未开始</AntSelect.Option>
+              <AntSelect.Option value="进行中">进行中</AntSelect.Option>
+              <AntSelect.Option value="已完成">已完成</AntSelect.Option>
+            </AntSelect>
+          </Form.Item>
 
+          <Form.Item name="priority" label="项目优先级" style={{ marginBottom: 16 }}>
+            <AntSelect placeholder="请选择项目优先级" size="middle" style={{ borderRadius: 6 }}>
+              <AntSelect.Option value="高">高</AntSelect.Option>
+              <AntSelect.Option value="中">中</AntSelect.Option>
+              <AntSelect.Option value="普通">普通</AntSelect.Option>
+              <AntSelect.Option value="低">低</AntSelect.Option>
+            </AntSelect>
+          </Form.Item>
 
-        <Form.Item
-          name="dateRange"
-          label="项目时间范围"
-          style={{ marginBottom: 16 }}
-        >
-          <DatePicker.RangePicker 
-            style={{ 
-              width: '100%',
-              borderRadius: 6
-            }} 
-            placeholder={["开始日期", "截止日期"]}
-            size="large"
-            format="YYYY-MM-DD"
-            allowClear
-            onChange={(dates) => {
-              // 当日期变化时，更新表单值
-              if (dates && dates[0]) {
-                projectForm.setFieldsValue({
-                  dateRange: [dayjs(dates[0]).format('YYYY-MM-DD'), dayjs(dates[1] || dates[0]).format('YYYY-MM-DD')]
-                });
-              } else {
-                projectForm.setFieldsValue({
-                  dateRange: null
-                });
-              }
-            }}
-          />
-        </Form.Item>
+          <Form.Item name="dateRange" label="项目时间范围" style={{ marginBottom: 16 }}>
+            <DatePicker.RangePicker
+              style={{
+                width: '100%',
+                borderRadius: 6,
+              }}
+              placeholder={['开始日期', '截止日期']}
+              size="middle"
+              format="YYYY-MM-DD"
+              allowClear
+              onChange={(dates) => {
+                // 当日期变化时，更新表单值
+                if (dates && dates[0]) {
+                  projectForm.setFieldsValue({
+                    dateRange: [
+                      dayjs(dates[0]).format('YYYY-MM-DD'),
+                      dayjs(dates[1] || dates[0]).format('YYYY-MM-DD'),
+                    ],
+                  });
+                } else {
+                  projectForm.setFieldsValue({
+                    dateRange: null,
+                  });
+                }
+              }}
+            />
+          </Form.Item>
 
-        <Form.Item
-          name="members"
-          label="项目成员（可多选）"
-          style={{ marginBottom: 16 }}
-        >
-          <AntSelect
-            mode="multiple"
-            showSearch
-            filterOption={false}
-            placeholder="搜索用户名或ID添加成员"
-            notFoundContent={memberLoading ? '搜索中...' : '暂无结果'}
-            options={memberOptions}
-            onSearch={handleSearchMember}
-            allowClear
-            size="large"
-            style={{ borderRadius: 6 }}
-            // 让已选成员以标签形式展示，可点击 × 移除
-            maxTagCount="responsive"
-          />
-        </Form.Item>
-
-
-      </Form>
-    </Modal>
+          <Form.Item name="members" label="项目成员（可多选）" style={{ marginBottom: 16 }}>
+            <AntSelect
+              mode="multiple"
+              showSearch
+              filterOption={false}
+              placeholder="搜索用户名或ID添加成员"
+              notFoundContent={memberLoading ? '搜索中...' : '暂无结果'}
+              options={memberOptions}
+              onSearch={handleSearchMember}
+              allowClear
+              size="middle"
+              style={{ borderRadius: 6 }}
+              // 让已选成员以标签形式展示，可点击 × 移除
+              maxTagCount="responsive"
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
