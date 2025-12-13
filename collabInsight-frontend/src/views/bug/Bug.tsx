@@ -106,7 +106,7 @@ export const Bug: React.FC = () => {
       setTasks(res);
       setFilteredTasks(res);
     } catch (error) {
-      message.error('获取任务失败');
+      message.error('获取Bug失败');
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,7 @@ export const Bug: React.FC = () => {
     loadProjects();
   }, []);
 
-  // 项目切换加载任务
+  // 项目切换加载Bug
   useEffect(() => {
     if (selectedProjectId) {
       loadTasks(selectedProjectId);
@@ -128,7 +128,7 @@ export const Bug: React.FC = () => {
     }
   }, [selectedProjectId]);
 
-  // 过滤任务
+  // 过滤Bug
   useEffect(() => {
     let data = [...tasks];
     if (searchText) {
@@ -166,7 +166,7 @@ export const Bug: React.FC = () => {
   const handleDeleteTask = (task: Task) => {
     Modal.confirm({
       title: '确认删除',
-      content: `确定要删除任务"${task.taskName}"吗？`,
+      content: `确定要删除Bug"${task.taskName}"吗？`,
       okText: '删除',
       okType: 'danger',
       cancelText: '取消',
@@ -194,10 +194,10 @@ export const Bug: React.FC = () => {
 
     if (editingTask) {
       await updateTask(editingTask._id, payload);
-      message.success('任务更新成功');
+      message.success('Bug更新成功');
     } else {
       await createTask(selectedProjectId, payload);
-      message.success('任务创建成功');
+      message.success('Bug创建成功');
     }
     setIsTaskModalVisible(false);
     loadTasks(selectedProjectId);
@@ -242,7 +242,7 @@ export const Bug: React.FC = () => {
 
   const taskColumns: ColumnsType<any> = [
     {
-      title: '任务名称',
+      title: 'Bug名称',
       dataIndex: 'taskName',
       key: 'taskName',
       ellipsis: true,
@@ -293,7 +293,7 @@ export const Bug: React.FC = () => {
       },
     },
     {
-      title: '任务状态',
+      title: 'Bug状态',
       dataIndex: 'status',
       key: 'status',
       width: 120,
@@ -362,21 +362,21 @@ export const Bug: React.FC = () => {
                 {/* 项目信息部分 */}
 
 
-                {/* 任务列表部分 */}
+                {/* Bug列表部分 */}
                 <div className="flex-1 flex flex-col overflow-hidden mt-6">
                   {/* 搜索和操作栏 */}
                   <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                    <h3 className="text-sm font-semibold">任务列表</h3>
+                    <h3 className="text-sm font-semibold">Bug列表</h3>
                     <div className="flex items-center gap-2">
                       <Input
-                        placeholder="搜索任务名称"
+                        placeholder="搜索Bug名称"
                         prefix={<SearchOutlined />}
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                         style={{ width: 140 }}
                       />
                       <Input
-                        placeholder="任务详情"
+                        placeholder="Bug详情"
                         prefix={<SearchOutlined />}
                         value={taskDetailsFilter}
                         onChange={(e) => setTaskDetailsFilter(e.target.value)}
@@ -394,7 +394,7 @@ export const Bug: React.FC = () => {
                         <Select.Option value="普通">普通</Select.Option>
                       </Select>
                       <Select
-                        placeholder="任务状态"
+                        placeholder="Bug状态"
                         style={{ width: 100 }}
                         allowClear
                         value={statusFilter}
@@ -408,7 +408,7 @@ export const Bug: React.FC = () => {
                       <Button
                         icon={<ReloadOutlined />}
                         onClick={handleRefreshTasks}
-                        title="刷新任务列表"
+                        title="刷新Bug列表"
                         size="small"
                       >
                         刷新
@@ -432,13 +432,13 @@ export const Bug: React.FC = () => {
                       dataSource={filteredTasks}
                       rowKey={(record) => record._id}
                       locale={{
-                        emptyText: '暂无任务数据，请点击"添加任务"按钮创建新任务',
+                        emptyText: '暂无Bug数据，请点击"添加Bug"按钮创建新Bug',
                       }}
                       pagination={{
                         pageSize: 10,
                         showSizeChanger: true,
                         showQuickJumper: true,
-                        showTotal: (total) => `共 ${total} 条任务记录`,
+                        showTotal: (total) => `共 ${total} 条Bug记录`,
                       }}
                       size="middle"
                     />
@@ -447,7 +447,7 @@ export const Bug: React.FC = () => {
               </div>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-400">
-                <span>请选择左侧项目查看任务</span>
+                <span>请选择左侧项目查看Bug</span>
               </div>
             )}
           </div>
