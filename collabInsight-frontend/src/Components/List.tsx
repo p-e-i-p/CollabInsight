@@ -1,24 +1,7 @@
-import {
-  List as AntdList,
-  Button,
-  Pagination,
-  Space,
-  Dropdown,
-  Menu,
-  Modal,
-  type ListProps as AntdListProps,
-} from 'antd';
-import {
-  DashOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  FormOutlined,
-  PlusOutlined,
-  MoreOutlined,
-} from '@ant-design/icons';
+import { List as AntdList, Button, Pagination, Dropdown, Menu, type ListProps as AntdListProps } from 'antd';
+import { DeleteOutlined, EditOutlined, PlusOutlined, MoreOutlined } from '@ant-design/icons';
 import Search from 'antd/es/input/Search';
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 /** 列表项类型定义（兼容 AntD List 数据格式） */
 export interface ListItem {
@@ -74,10 +57,10 @@ const CustomList: React.FC<CustomListProps> = ({
   onPageChange,
   defaultSelectedKey = '',
   listClassName = '',
-  width = 220,
+
+  width = 250,
   defaultCurrentPage = 1,
 }) => {
-  const navigate = useNavigate();
   // 校验必填属性
   useEffect(() => {
     if (!title) {
@@ -152,43 +135,36 @@ const CustomList: React.FC<CustomListProps> = ({
       onClick={() => handleItemClick(item)}
       style={{
         borderRadius: '8px',
-        padding: '4px 8px',
+        padding: '12px 10px',
+        marginBottom: '8px',
       }}
     >
       <AntdList.Item.Meta title={item.label} />
       <div className="flex justify-end">
-        <Dropdown
-          trigger={['click']}
-          overlay={
+        <Dropdown 
+          trigger={['click']} 
+          overlay={(
             <Menu>
               <Menu.Item key="edit" icon={<EditOutlined />}>
-                <div onClick={() => onUpdate?.(item)}>编辑</div>
+                <div onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdate?.(item);
+                }}>编辑</div>
               </Menu.Item>
               <Menu.Item key="delete" icon={<DeleteOutlined />}>
-                <div
-                  onClick={() => {
-                    Modal.confirm({
-                      title: '确认删除',
-                      content: `确定要删除此项吗？此操作不可恢复。`,
-                      okText: '确认',
-                      cancelText: '取消',
-                      onOk: () => {
-                        // 调用删除回调函数
-                        onDelete?.(item);
-                      },
-                    });
-                  }}
-                >
-                  删除
-                </div>
+                <div onClick={(e) => {
+                  e.stopPropagation();
+                  // 直接调用删除回调函数，让父组件处理确认
+                  onDelete?.(item);
+                }}>删除</div>
               </Menu.Item>
             </Menu>
-          }
+          )}
           placement="bottomRight"
         >
-          <Button
-            type="text"
-            className="action-btn"
+          <Button 
+            type="text" 
+            className="action-btn" 
             onClick={(e) => e.stopPropagation()}
             title="更多操作"
           >
@@ -201,25 +177,26 @@ const CustomList: React.FC<CustomListProps> = ({
 
   return (
     <div
-      className="rounded-lg border border-gray-200 overflow-hidden flex flex-col h-full"
-      style={{ width: `${width}px` }}
+      className="rounded-lg border border-gray-200 overflow-hidden flex flex-col "
+      style={{ width: `${width}px`, height: `705px` }}
     >
       {/* 1. 标题区域 */}
-      <div className="p-2 border-b border-gray-200 flex-shrink-0">
-        <h2 className=" text-base font-semibold text-center">{title}</h2>
+      <div className="p-2 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-center">{title}</h3>
       </div>
 
       {/* 2. 操作区域 - 搜索框 + 新增按钮（右对齐） */}
-      <div className="py-3 px-1 border-gray-200 flex justify-end items-center gap-1 flex-shrink-0">
+      <div className="p-3  border-gray-200 flex justify-end items-center gap-3">
         <Search
           placeholder="搜索"
           allowClear
           onSearch={handleSearch}
           className="rounded-md"
           aria-label="搜索"
+          style={{ width: 304 }}
         />
         <PlusOutlined
-          className="text-violet-600 cursor-pointer text-sm hover:text-grey-700 transition-colors"
+          className="text-blue-600 cursor-pointer text-base hover:text-blue-700 transition-colors"
           onClick={onAdd}
           title="新增"
           aria-label="新增"
@@ -227,7 +204,7 @@ const CustomList: React.FC<CustomListProps> = ({
       </div>
 
       {/* 3. 列表区域（只展示当前页数据） */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <article className="flex-1 overflow-y-auto ">
         <AntdList
           dataSource={currentData} // 渲染当前页数据，而非全部数据
           renderItem={renderListItem}
@@ -235,10 +212,10 @@ const CustomList: React.FC<CustomListProps> = ({
           bordered={false}
           locale={{ emptyText: '暂无数据' }}
         />
-      </div>
+      </article>
 
       {/* 4. 分页区域（联动当前页） */}
-      <div className="p-3 border-gray-200 flex justify-end flex-shrink-0">
+      <footer className="p-3  border-gray-200 flex justify-end">
         <Pagination
           simple
           current={currentPage} // 绑定当前页状态
@@ -249,7 +226,7 @@ const CustomList: React.FC<CustomListProps> = ({
           aria-label="分页控件"
           size="small"
         />
-      </div>
+      </footer>
     </div>
   );
 };

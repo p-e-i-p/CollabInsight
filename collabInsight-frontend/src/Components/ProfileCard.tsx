@@ -84,7 +84,7 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const handleFinish = async (values: UpdateProfileParams) => {
     try {
       await updateUserProfile(values);
-      message.success('个人信息更新成功');
+      // HTTP拦截器已经显示了成功消息，这里不需要再显示
       // 重新获取用户信息以刷新显示
       const profile = await getUserProfile();
       form.setFieldsValue({
@@ -103,7 +103,8 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         onClose();
       }, 1000); // 延迟1秒关闭，让用户看到成功消息
     } catch (error) {
-      message.error('更新个人信息失败');
+      // 错误消息由HTTP拦截器统一处理，这里不需要再显示
+      console.error('更新个人信息失败:', error);
     }
   };
 
@@ -162,14 +163,15 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         avatar: profile.avatar,
       });
 
-      message.success('头像上传成功');
+      // HTTP拦截器已经显示了成功消息，这里不需要再显示
       setAvatarFileList([]);
       setAvatarModalVisible(false);
 
       // 更新Header中的头像
       updateHeaderAvatar(form.getFieldValue('avatar'));
     } catch (error: any) {
-      message.error(error.message || '头像上传失败');
+      // 错误消息由HTTP拦截器统一处理，这里不需要再显示
+      console.error('头像上传失败:', error);
     } finally {
       setUploadLoading(false);
     }

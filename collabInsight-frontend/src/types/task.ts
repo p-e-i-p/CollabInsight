@@ -2,8 +2,8 @@ export interface Project {
   _id: string;
   name: string;
   description?: string;
-  status: string;
-  priority: string;
+  status: '未开始' | '进行中' | '已完成';
+  priority: '高' | '中' | '普通' | '低';
   deadline?: string;
   leader: {
     _id: string;
@@ -15,6 +15,8 @@ export interface Project {
     username: string;
     role: string;
   }>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Task {

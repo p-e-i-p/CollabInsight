@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Project = require('../models/Project');
 const Task = require('../models/Task');
 const User = require('../models/User');
@@ -263,6 +264,56 @@ router.put('/tasks/:taskId', protect, async (req, res) => {
   }
 });
 
+// 更新项目（组长可更新全部，成员无权更新）
+router.put('/:projectId', protect, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.user.id;
+    const { name, description, status, priority, deadline, memberIds } = req.body;
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: '项目不存在' });
+    }
+
+    // 仅组长可更新项目
+    if (project.leader.toString() !== userId.toString()) {
+      return res.status(403).json({ message: '仅组长可更新项目' });
+    }
+
+    // 更新项目信息
+    if (name !== undefined && name !== null) project.name = name;
+    if (description !== undefined) project.description = description || '';
+    if (status !== undefined && status !== null) project.status = status;
+    if (priority !== undefined && priority !== null) project.priority = priority;
+    if (deadline !== undefined) {
+      // 如果 deadline 是空字符串，设置为 null；否则转换为 Date
+      project.deadline = deadline && deadline.trim() !== '' ? new Date(deadline) : null;
+    }
+    
+    // 更新成员列表
+    if (memberIds !== undefined) {
+      // 确保组长始终在成员列表中，并过滤掉无效值
+      const validMemberIds = Array.isArray(memberIds) 
+        ? memberIds.filter(id => id && id.toString().trim() !== '')
+        : [];
+      const members = Array.from(new Set([project.leader.toString(), ...validMemberIds.map(id => id.toString())]));
+      project.members = members;
+    }
+
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate('leader', 'username role')
+      .populate('members', 'username role');
+
+    res.status(200).json({ code: 200, data: populated });
+  } catch (error) {
+    console.error('更新项目错误:', error);
+    res.status(500).json({ message: error.message || '更新项目失败' });
+  }
+});
+
 // 删除任务（组长可删全部，成员仅能删除自己的）
 router.delete('/tasks/:taskId', protect, async (req, res) => {
   try {
@@ -282,11 +333,39 @@ router.delete('/tasks/:taskId', protect, async (req, res) => {
       return res.status(403).json({ message: '无权删除该任务' });
     }
 
-    await task.remove();
+    await Task.findByIdAndDelete(taskId);
     res.status(200).json({ code: 200, message: '任务删除成功' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error.message || '删除任务失败' });
+  }
+});
+
+// 删除项目（仅组长可删除）
+router.delete('/:projectId', protect, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.user.id;
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: '项目不存在' });
+    }
+
+    // 仅组长可删除项目
+    if (project.leader.toString() !== userId.toString()) {
+      return res.status(403).json({ message: '仅组长可删除项目' });
+    }
+
+    // 删除项目下的所有任务
+    await Task.deleteMany({ project: projectId });
+
+    // 删除项目
+    await Project.findByIdAndDelete(projectId);
+    res.status(200).json({ code: 200, message: '项目删除成功' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message || '删除项目失败' });
   }
 });
 

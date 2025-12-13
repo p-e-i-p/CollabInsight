@@ -158,14 +158,14 @@ const UserManagement: React.FC = () => {
   const handleDeleteUser = async (userId: string) => {
     try {
       await deleteUser(userId);
-      message.success('用户删除成功');
+      // HTTP拦截器已经显示了成功消息，这里不需要再显示
       fetchUsers();
     } catch (error: any) {
+      // 错误消息由HTTP拦截器统一处理，这里只需要处理特殊权限错误
       if (error.response && error.response.status === 403) {
-        message.error('需要管理员权限');
-      } else {
-        message.error('用户删除失败');
+        // 403错误已经在拦截器中处理，这里不需要再显示
       }
+      console.error('删除用户失败:', error);
     }
   };
 
@@ -177,15 +177,15 @@ const UserManagement: React.FC = () => {
       } else {
         await createUser(values);
       }
-      message.success(editingUserId ? '用户更新成功' : '用户添加成功');
+      // HTTP拦截器已经显示了成功消息，这里不需要再显示
       setModalVisible(false);
       fetchUsers();
     } catch (error: any) {
+      // 错误消息由HTTP拦截器统一处理，这里只需要处理特殊权限错误
       if (error.response && error.response.status === 403) {
-        message.error('需要管理员权限');
-      } else {
-        message.error(editingUserId ? '用户更新失败' : '用户添加失败');
+        // 403错误已经在拦截器中处理，这里不需要再显示
       }
+      console.error('提交用户失败:', error);
     }
   };
 

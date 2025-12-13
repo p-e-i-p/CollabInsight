@@ -10,10 +10,12 @@ import {
   createProject,
   createTask,
   deleteTask,
+  deleteProject,
   fetchProjects,
   fetchTasksByProject,
   searchUser,
   searchUserForProject,
+  updateProject,
   updateTask,
 } from '@/request/api/task';
 import { getUserProfile } from '@/request/api/user/profile';
@@ -171,10 +173,15 @@ export const TaskCenter: React.FC = () => {
       okType: 'danger',
       cancelText: '取消',
       onOk: async () => {
-        await deleteTask(task._id);
-        message.success('删除成功');
-        if (selectedProjectId) {
-          loadTasks(selectedProjectId);
+        try {
+          await deleteTask(task._id);
+          // HTTP拦截器已经显示了成功消息，这里不需要再显示
+          if (selectedProjectId) {
+            loadTasks(selectedProjectId);
+          }
+        } catch (error) {
+          // 错误消息由HTTP拦截器统一处理，这里不需要再显示
+          console.error('删除任务失败:', error);
         }
       },
     });
@@ -182,25 +189,30 @@ export const TaskCenter: React.FC = () => {
 
   const handleTaskSubmit = async (values: any) => {
     if (!selectedProjectId || !currentUser) return;
-    const payload = {
-      taskName: values.taskName,
-      taskDetails: values.taskDetails,
-      assignee: values.assignee,
-      startDate: values.startDate ? values.startDate.toISOString() : undefined,
-      deadline: values.deadline ? values.deadline.toISOString() : undefined,
-      urgency: values.urgency,
-      status: values.status,
-    };
+    try {
+      const payload = {
+        taskName: values.taskName,
+        taskDetails: values.taskDetails,
+        assignee: values.assignee,
+        startDate: values.startDate ? values.startDate.toISOString() : undefined,
+        deadline: values.deadline ? values.deadline.toISOString() : undefined,
+        urgency: values.urgency,
+        status: values.status,
+      };
 
-    if (editingTask) {
-      await updateTask(editingTask._id, payload);
-      message.success('任务更新成功');
-    } else {
-      await createTask(selectedProjectId, payload);
-      message.success('任务创建成功');
+      if (editingTask) {
+        await updateTask(editingTask._id, payload);
+        // HTTP拦截器已经显示了成功消息，这里不需要再显示
+      } else {
+        await createTask(selectedProjectId, payload);
+        // HTTP拦截器已经显示了成功消息，这里不需要再显示
+      }
+      setIsTaskModalVisible(false);
+      loadTasks(selectedProjectId);
+    } catch (error) {
+      // 错误消息由HTTP拦截器统一处理，这里不需要再显示
+      console.error('提交任务失败:', error);
     }
-    setIsTaskModalVisible(false);
-    loadTasks(selectedProjectId);
   };
 
   const handleRefreshTasks = () => {
@@ -210,29 +222,54 @@ export const TaskCenter: React.FC = () => {
   };
 
   const handleCreateProject = async (values: any) => {
-    await createProject({
-      name: values.projectName,
-      description: values.projectDesc,
-      status: values.status,
-      priority: values.priority,
-      deadline: values.deadline,
-      memberIds: values.members,
-    });
-    message.success('项目创建成功');
-    loadProjects();
+    try {
+      await createProject({
+        name: values.projectName,
+        description: values.projectDesc,
+        status: values.status,
+        priority: values.priority,
+        deadline: values.deadline, // 已经是 YYYY-MM-DD 格式
+        memberIds: values.members || [],
+      });
+      // HTTP拦截器已经显示了成功消息，这里不需要再显示
+      loadProjects();
+    } catch (error: any) {
+      console.error('创建项目失败:', error);
+      // 错误消息由HTTP拦截器统一处理，这里不需要再显示
+    }
   };
 
-  const handleEditProject = async (_projectId: string, values: any) => {
-    await createProject({
-      name: values.projectName,
-      description: values.projectDesc,
-      status: values.status,
-      priority: values.priority,
-      deadline: values.deadline,
-      memberIds: values.members,
-    });
-    message.success('项目更新成功');
-    loadProjects();
+  const handleEditProject = async (projectId: string, values: any) => {
+    try {
+      await updateProject(projectId, {
+        name: values.projectName,
+        description: values.projectDesc,
+        status: values.status,
+        priority: values.priority,
+        deadline: values.deadline, // 已经是 YYYY-MM-DD 格式
+        memberIds: values.members || [],
+      });
+      // HTTP拦截器已经显示了成功消息，这里不需要再显示
+      loadProjects();
+    } catch (error: any) {
+      console.error('更新项目失败:', error);
+      // 错误消息由HTTP拦截器统一处理，这里不需要再显示
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      await deleteProject(projectId);
+      // HTTP拦截器已经显示了成功消息，这里不需要再显示
+      // 如果删除的是当前选中的项目，清空选中状态
+      if (selectedProjectId === projectId) {
+        setSelectedProjectId(null);
+      }
+      loadProjects();
+    } catch (error) {
+      // 错误消息由HTTP拦截器统一处理，这里不需要再显示
+      console.error('删除项目失败:', error);
+    }
   };
 
   const handleSearchMemberForProject = async (keyword: string) => {
@@ -350,6 +387,7 @@ export const TaskCenter: React.FC = () => {
             }}
             onCreateProject={handleCreateProject}
             onEditProject={handleEditProject}
+            onDeleteProject={handleDeleteProject}
             onSearchMember={handleSearchMemberForProject}
           />
         </div>

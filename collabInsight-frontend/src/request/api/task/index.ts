@@ -40,3 +40,18 @@ export const searchUser = (keyword: string) => {
   return http.get('/api/search', { keyword });
 };
 
+export const updateProject = (projectId: string, data: {
+  name?: string;
+  description?: string;
+  status?: '未开始' | '进行中' | '已完成';
+  priority?: '高' | '中' | '普通' | '低';
+  deadline?: string;
+  memberIds?: string[];
+}) => {
+  return http.put<Project>(`/api/projects/${projectId}`, data, { showSuccessToast: true });
+};
+
+export const deleteProject = (projectId: string) => {
+  return http.delete(`/api/projects/${projectId}`, undefined, { showSuccessToast: true });
+};
+

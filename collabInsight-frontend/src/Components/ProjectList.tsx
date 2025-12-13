@@ -1,8 +1,7 @@
 import React from 'react';
 import dayjs from 'dayjs';
 import CustomList, { type ListItem } from '@/Components/List';
-import { Button, Input, Modal, Form, DatePicker, Select as AntSelect, Dropdown, Menu } from 'antd';
-import { PlusCircleOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
+import { Input, Modal, Form, DatePicker, Select as AntSelect } from 'antd';
 
 interface ProjectListProps {
   // 项目数据
@@ -91,6 +90,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({
     setIsProjectModalVisible(true);
     setIsEditing(false);
     setCurrentEditingKey(null);
+    setEditingProject(null);
+    setMemberOptions([]);
     projectForm.resetFields();
   };
 
@@ -120,37 +121,107 @@ export const ProjectList: React.FC<ProjectListProps> = ({
     if (isProjectModalVisible && isEditing && editingProject) {
       // 预填成员选项，确保已有成员展示为可删除标签
       const memberOpts = (editingProject.members || []).map((m: any) => {
-        const value = typeof m === 'string' ? m : m._id;
-        const label = typeof m === 'string' ? m : m.username || m._id;
+        const value = typeof m === 'string' ? m : m._id || m;
+        const label = typeof m === 'string' ? m : (m.username || m._id || m);
         return { label, value };
       });
       setMemberOptions(memberOpts);
 
+      // 处理日期范围：如果有截止日期，使用它作为结束日期
+      const deadlineDate = editingProject.deadline 
+        ? dayjs(editingProject.deadline) 
+        : null;
+      
       projectForm.setFieldsValue({
         projectName: editingProject.projectName,
-        projectDesc: editingProject.projectDesc,
-        status: editingProject.status,
-        priority: editingProject.priority,
-        dateRange: editingProject.deadline
-          ? [dayjs(editingProject.deadline), dayjs(editingProject.deadline)]
+        projectDesc: editingProject.projectDesc || '',
+        status: editingProject.status || '未开始',
+        priority: editingProject.priority || '普通',
+        dateRange: deadlineDate 
+          ? [deadlineDate, deadlineDate] 
           : null,
         members: (editingProject.members || []).map((m: any) =>
-          typeof m === 'string' ? m : m._id
+          typeof m === 'string' ? m : (m._id || m)
         ),
       });
+    } else if (isProjectModalVisible && !isEditing) {
+      // 新增模式：清空表单
+      projectForm.resetFields();
+      setMemberOptions([]);
     }
   }, [isProjectModalVisible, isEditing, editingProject, projectForm]);
 
+  // 新增模式：弹窗打开时自动加载所有用户
+  React.useEffect(() => {
+    if (isProjectModalVisible && !isEditing && onSearchMember && memberOptions.length === 0) {
+      // 延迟加载，避免与表单重置冲突
+      const timer = setTimeout(async () => {
+        try {
+          setMemberLoading(true);
+          const list = await onSearchMember('');
+          const options = (list || []).map((u) => ({
+            label: `${u.username} (${u.role === 'admin' ? '组长' : '成员'})`,
+            value: u._id,
+          }));
+          setMemberOptions(options);
+        } catch (error) {
+          console.error('加载用户列表失败:', error);
+        } finally {
+          setMemberLoading(false);
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isProjectModalVisible, isEditing, onSearchMember, memberOptions.length]);
+
   const handleSearchMember = async (keyword: string) => {
-    if (!onSearchMember || !keyword) return;
+    if (!onSearchMember) return;
+    
     try {
       setMemberLoading(true);
-      const list = await onSearchMember(keyword);
-      const options = (list || []).map((u) => ({
-        label: `${u.username} (${u.role === 'admin' ? '组长' : '成员'})`,
+      // 即使关键词为空，也调用API获取所有用户
+      const searchKeyword = keyword ? keyword.trim() : '';
+      const list = await onSearchMember(searchKeyword);
+      
+      // 确保返回的是数组
+      const userList = Array.isArray(list) ? list : [];
+      
+      const options = userList.map((u: any) => ({
+        label: `${u.username || u._id} (${u.role === 'admin' ? '组长' : '成员'})`,
         value: u._id,
       }));
-      setMemberOptions(options);
+      
+      // 合并搜索结果和已有成员（编辑模式）
+      if (isEditing && editingProject) {
+        const existingMembers = (editingProject.members || []).map((m: any) => {
+          const value = typeof m === 'string' ? m : m._id || m;
+          const label = typeof m === 'string' ? m : (m.username || m._id || m);
+          return { label, value };
+        });
+        // 合并并去重，确保已有成员也在列表中
+        const merged = [...existingMembers];
+        options.forEach((opt) => {
+          if (!merged.find((m) => m.value === opt.value)) {
+            merged.push(opt);
+          }
+        });
+        setMemberOptions(merged);
+      } else {
+        setMemberOptions(options);
+      }
+    } catch (error: any) {
+      console.error('搜索成员失败:', error);
+      // 如果搜索失败，至少保留已有成员（编辑模式）
+      if (isEditing && editingProject) {
+        const existingMembers = (editingProject.members || []).map((m: any) => {
+          const value = typeof m === 'string' ? m : m._id || m;
+          const label = typeof m === 'string' ? m : (m.username || m._id || m);
+          return { label, value };
+        });
+        setMemberOptions(existingMembers);
+      } else {
+        setMemberOptions([]);
+      }
     } finally {
       setMemberLoading(false);
     }
@@ -162,6 +233,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({
     setIsEditing(false);
     setCurrentEditingKey(null);
     setEditingProject(null);
+    setMemberOptions([]);
+    projectForm.resetFields();
   };
 
   // 处理右侧操作按钮点击
@@ -180,64 +253,57 @@ export const ProjectList: React.FC<ProjectListProps> = ({
 
   // 提交新增/编辑项目
   const handleProjectModalOk = async () => {
-    projectForm
-      .validateFields()
-      .then(async (values) => {
-        const projectName = values.projectName;
+    try {
+      const values = await projectForm.validateFields();
+      const projectName = values.projectName;
 
-        // 处理日期范围
-        let deadline = '';
-        if (values.dateRange && values.dateRange.length > 0) {
-          // 使用第一个日期作为截止日期
-          deadline = dayjs(values.dateRange[0]).format('YYYY-MM-DD');
+      // 处理日期范围：使用结束日期（第二个日期）作为截止日期
+      let deadline = '';
+      if (values.dateRange && Array.isArray(values.dateRange) && values.dateRange.length > 0) {
+        // 如果有结束日期，使用结束日期；否则使用开始日期
+        const endDate = values.dateRange[1] || values.dateRange[0];
+        deadline = dayjs(endDate).format('YYYY-MM-DD');
+      }
+
+      // 创建项目对象
+      const payload = {
+        projectName,
+        projectDesc: values.projectDesc || '',
+        status: values.status || '未开始',
+        priority: values.priority || '普通',
+        deadline: deadline || undefined, // 如果没有设置日期，传undefined而不是空字符串
+        tasks: [],
+        members: values.members || [],
+      };
+
+      // 如果是编辑模式
+      if (isEditing && currentEditingKey) {
+        // 调用父组件传递的编辑处理函数
+        if (onEditProject) {
+          await onEditProject(currentEditingKey, payload);
         }
 
-        // 如果没有设置截止日期，使用当前日期
-        if (!deadline) {
-          deadline = dayjs().format('YYYY-MM-DD');
+        // 关闭弹窗并重置状态
+        handleProjectModalCancel();
+      } else {
+        // 新增模式
+        if (onCreateProject) {
+          await onCreateProject(payload);
+        } else if (onAdd) {
+          onAdd();
         }
 
-        // 创建项目对象
-        const payload = {
-          projectName,
-          projectDesc: values.projectDesc || '',
-          status: values.status || '未开始',
-          priority: values.priority || '普通',
-          deadline,
-          tasks: [],
-          members: values.members || [],
-        };
-
-        // 如果是编辑模式
-        if (isEditing && currentEditingKey) {
-          // 调用父组件传递的编辑处理函数
-          if (onEditProject) {
-            await onEditProject(currentEditingKey, payload);
-          }
-
-          // 关闭弹窗
-          setIsProjectModalVisible(false);
-
-          // 显示成功消息
-          alert(`项目 "${projectName}" 编辑成功！`);
-        } else {
-          // 新增模式
-          if (onCreateProject) {
-            await onCreateProject(payload);
-          } else if (onAdd) {
-            onAdd();
-          }
-
-          // 关闭弹窗
-          setIsProjectModalVisible(false);
-
-          // 显示成功消息
-          alert(`项目 "${projectName}" 添加成功！`);
-        }
-      })
-      .catch((info) => {
-        console.log('Validate Failed:', info);
-      });
+        // 关闭弹窗并重置状态
+        handleProjectModalCancel();
+      }
+    } catch (error: any) {
+      // 表单验证失败或其他错误
+      if (error.errorFields) {
+        console.log('表单验证失败:', error.errorFields);
+      } else {
+        console.error('提交失败:', error);
+      }
+    }
   };
 
   return (
@@ -329,7 +395,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
             </AntSelect>
           </Form.Item>
 
-          <Form.Item name="dateRange" label="项目时间范围" style={{ marginBottom: 16 }}>
+          <Form.Item name="dateRange" label="项目截止日期" style={{ marginBottom: 16 }}>
             <DatePicker.RangePicker
               style={{
                 width: '100%',
@@ -339,21 +405,6 @@ export const ProjectList: React.FC<ProjectListProps> = ({
               size="middle"
               format="YYYY-MM-DD"
               allowClear
-              onChange={(dates) => {
-                // 当日期变化时，更新表单值
-                if (dates && dates[0]) {
-                  projectForm.setFieldsValue({
-                    dateRange: [
-                      dayjs(dates[0]).format('YYYY-MM-DD'),
-                      dayjs(dates[1] || dates[0]).format('YYYY-MM-DD'),
-                    ],
-                  });
-                } else {
-                  projectForm.setFieldsValue({
-                    dateRange: null,
-                  });
-                }
-              }}
             />
           </Form.Item>
 
@@ -362,10 +413,16 @@ export const ProjectList: React.FC<ProjectListProps> = ({
               mode="multiple"
               showSearch
               filterOption={false}
-              placeholder="搜索用户名或ID添加成员"
+              placeholder="搜索用户名或ID添加成员，点击可查看全部用户"
               notFoundContent={memberLoading ? '搜索中...' : '暂无结果'}
               options={memberOptions}
               onSearch={handleSearchMember}
+              onFocus={() => {
+                // 当选择框聚焦时，如果没有选项，自动加载所有用户
+                if (memberOptions.length === 0) {
+                  handleSearchMember('');
+                }
+              }}
               allowClear
               size="middle"
               style={{ borderRadius: 6 }}

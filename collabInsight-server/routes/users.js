@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const { generateToken } = require('../utils/jwt');
 const { protect, admin } = require('../middleware/auth');
@@ -273,21 +274,50 @@ router.post('/avatar', protect, upload.single('avatar'), async (req, res) => {
 router.get('/search', protect, async (req, res) => {
   try {
     const { keyword = '' } = req.query;
-    const regex = new RegExp(keyword, 'i');
-    const conditions = [{ username: regex }];
+    console.log('搜索用户请求，关键词:', keyword);
+    
+    let users;
+    if (!keyword || keyword.trim() === '') {
+      // 如果关键词为空，返回所有用户（限制数量）
+      console.log('搜索所有用户');
+      users = await User.find()
+        .select('_id username role')
+        .limit(50)
+        .sort({ username: 1 }); // 按用户名排序
+    } else {
+      // 有关键词时进行搜索
+      const trimmedKeyword = keyword.trim();
+      console.log('搜索关键词:', trimmedKeyword);
+      const regex = new RegExp(trimmedKeyword, 'i');
+      const conditions = [{ username: regex }];
 
-    // 仅当 keyword 是合法 ObjectId 时才按 _id 查询，避免 CastError
-    if (mongoose.Types.ObjectId.isValid(keyword)) {
-      conditions.push({ _id: keyword });
+      // 仅当 keyword 是合法 ObjectId 时才按 _id 查询，避免 CastError
+      if (mongoose.Types.ObjectId.isValid(trimmedKeyword)) {
+        console.log('关键词是有效的ObjectId，添加_id查询条件');
+        try {
+          const objectId = new mongoose.Types.ObjectId(trimmedKeyword);
+          conditions.push({ _id: objectId });
+        } catch (err) {
+          console.log('ObjectId转换失败，跳过_id查询:', err);
+        }
+      }
+
+      users = await User.find({ $or: conditions })
+        .select('_id username role')
+        .limit(50)
+        .sort({ username: 1 }); // 按用户名排序
     }
 
-    const users = await User.find({ $or: conditions })
-      .select('_id username role')
-      .limit(20);
+    console.log('找到用户数量:', users.length);
     res.status(200).json({ code: 200, data: users });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: '搜索用户失败' });
+    console.error('搜索用户错误详情:', error);
+    console.error('错误堆栈:', error.stack);
+    res.status(500).json({ 
+      code: 500,
+      message: error.message || '搜索用户失败',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
