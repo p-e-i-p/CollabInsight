@@ -14,7 +14,6 @@ import {
   fetchProjects,
   fetchTasksByProject,
   searchUser,
-  searchUserForProject,
   updateProject,
   updateTask,
 } from '@/request/api/task';
@@ -511,20 +510,26 @@ export const TaskCenter: React.FC = () => {
                   </div>
 
                   {/* 表格部分 */}
-                  <div className="flex-1 overflow-auto">
+                  <div
+                    className="flex-1 min-h-0 overflow-auto"
+                    style={{ paddingBottom: 32, maxHeight: 'calc(100vh - 220px)' }}
+                  >
                     <Table
                       loading={loading}
                       columns={taskColumns}
                       dataSource={filteredTasks}
                       rowKey={(record) => record._id}
+                      scroll={{ x: 'max-content', y: 'calc(100vh - 500px)' }}
                       locale={{
                         emptyText: '暂无任务数据，请点击"添加任务"按钮创建新任务',
                       }}
                       pagination={{
                         pageSize: 10,
-                        showSizeChanger: true,
+                        showSizeChanger: false,
                         showQuickJumper: true,
                         showTotal: (total) => `共 ${total} 条任务记录`,
+                        position: ['bottomRight'],
+                        style: { margin: '12px 0' },
                       }}
                       size="middle"
                     />

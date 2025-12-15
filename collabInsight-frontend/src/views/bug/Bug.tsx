@@ -476,13 +476,13 @@ export const Bug: React.FC = () => {
 
         {/* 右侧内容区域 */}
         <div className="flex-1 flex flex-col overflow-hidden ml-4">
-          <div className="p-2 border rounded-lg bg-white flex-1 overflow-hidden">
+          <div className="p-2 border rounded-lg bg-white flex-1 overflow-hidden min-h-0">
             {selectedProject ? (
-              <div className="h-full flex flex-col">
+              <div className="h-full flex flex-col min-h-0">
                 {/* 项目信息部分 */}
 
                 {/* Bug列表部分 */}
-                <div className="flex-1 flex flex-col overflow-hidden mt-6">
+                <div className="flex-1 flex flex-col overflow-hidden min-h-0 mt-6">
                   {/* 搜索和操作栏 */}
                   <div className="flex justify-between items-center mb-4 flex-shrink-0">
                     <h3 className="text-sm font-semibold">Bug列表</h3>
@@ -547,22 +547,26 @@ export const Bug: React.FC = () => {
                   </div>
 
                   {/* 表格部分 */}
-                  <div className="flex-1 overflow-auto">
+                  <div
+                    className="flex-1 min-h-0 overflow-auto"
+                    style={{ paddingBottom: 16 }}
+                  >
                     <Table
                       loading={loading}
                       columns={bugColumns}
                       dataSource={filteredBugs}
                       rowKey={(record) => record._id}
-                      scroll={{ x: 'max-content' }}
-                      sticky
+                      scroll={{ x: 'max-content', y: 'calc(100vh - 360px)' }}
                       locale={{
                         emptyText: '暂无Bug数据，请点击"添加Bug"按钮创建新Bug',
                       }}
                       pagination={{
                         pageSize: 10,
-                        showSizeChanger: true,
+                        showSizeChanger: false,
                         showQuickJumper: true,
                         showTotal: (total) => `共 ${total} 条Bug记录`,
+                        position: ['bottomRight'],
+                        style: { margin: '12px 0' },
                       }}
                       size="middle"
                     />

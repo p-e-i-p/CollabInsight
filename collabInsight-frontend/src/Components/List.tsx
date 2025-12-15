@@ -137,9 +137,10 @@ const CustomList: React.FC<CustomListProps> = ({
       `}
       onClick={() => handleItemClick(item)}
       style={{
-        borderRadius: '8px',
-        padding: '12px 10px',
-        marginBottom: '8px',
+        borderRadius: '6px',
+        padding: '5px 7px',
+        marginBottom: '3px',
+        minHeight: 44,
       }}
     >
       <AntdList.Item.Meta title={item.label} />
@@ -180,19 +181,21 @@ const CustomList: React.FC<CustomListProps> = ({
 
   return (
     <div
-      className="rounded-lg border border-gray-200 overflow-hidden flex flex-col "
+      className="rounded-lg border border-gray-200 overflow-hidden flex flex-col"
       style={{
         width: `${width}px`,
         height: typeof height === 'number' ? `${height}px` : height,
+        paddingTop: 5,
+        paddingBottom: 5,
       }}
     >
       {/* 1. 标题区域 */}
-      <div className="p-2 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-center">{title}</h3>
+      <div className="px-3 py-1.25 border-b border-gray-200">
+        <h3 className="text-sm font-semibold text-center">{title}</h3>
       </div>
 
       {/* 2. 操作区域 - 搜索框 + 新增按钮（右对齐） */}
-      <div className="p-3  border-gray-200 flex justify-end items-center gap-3">
+      <div className="px-3 py-1.25 border-gray-200 flex justify-end items-center gap-1.25 mt-2.5 mb-2.5">
         <Search
           placeholder="搜索"
           allowClear
