@@ -67,16 +67,19 @@ export const Bug: React.FC = () => {
     return record;
   }, [projects]);
 
+  const leaderId = useMemo(() => selectedProject?._id && (selectedProject.leader as any)?._id || selectedProject?.leader || '', [selectedProject]);
+
   // 计算可选成员（组长 + 成员）
   const assigneeMap: AssigneeMap = useMemo(() => {
     if (!selectedProject) return {};
     const members = [...selectedProject.members, selectedProject.leader];
     const map: AssigneeMap = {};
     members.forEach((m) => {
-      map[m._id] = { name: m.username, role: m.role === 'admin' ? '组长' : '成员' };
+      const isLeader = m._id?.toString?.() === leaderId?.toString?.();
+      map[m._id] = { name: m.username, role: isLeader ? '组长' : '成员' };
     });
     return map;
-  }, [selectedProject]);
+  }, [selectedProject, leaderId]);
 
   const isProjectLeader = useMemo(() => {
     if (!selectedProject || !currentUser) return false;
@@ -149,6 +152,11 @@ export const Bug: React.FC = () => {
     const res: any = await searchUserForBug(selectedProjectId, keyword);
     return res as Array<{ _id: string; username: string; role: string }>;
   };
+
+  const currentUserRoleLabel = useMemo(() => {
+    if (!currentUser || !selectedProject) return '成员';
+    return currentUser.id?.toString?.() === leaderId?.toString?.() ? '组长' : '成员';
+  }, [currentUser, selectedProject, leaderId]);
 
   // 初始化
   useEffect(() => {
@@ -583,7 +591,7 @@ export const Bug: React.FC = () => {
         onCancel={() => setIsBugModalVisible(false)}
         onOk={handleBugSubmit}
         projectKey={selectedProjectId || undefined}
-        currentUserRole={currentUser?.role || '成员'}
+        currentUserRole={currentUserRoleLabel}
         currentUser={
           currentUser || {
             id: '',
