@@ -19,7 +19,9 @@ const protect = async (req, res, next) => {
 
       // 获取用户信息，但不包含密码
       req.user = await User.findById(decoded.id).select('-password');
-
+      if (!req.user) {
+        return res.status(401).json({ message: '未授权，用户不存在' });
+      }
       next();
     } catch (error) {
       console.error(error);

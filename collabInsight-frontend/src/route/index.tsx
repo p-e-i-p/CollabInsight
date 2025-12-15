@@ -8,6 +8,9 @@ const Login = lazy(() => import('@/views/login/Login').then((mod) => ({ default:
 const Register = lazy(() =>
   import('@/views/register/Register').then((mod) => ({ default: mod.default }))
 );
+const Dashboard = lazy(() =>
+  import('@/views/dashboard/Dashboard').then((mod) => ({ default: mod.default }))
+);
 const TaskCenter = lazy(() =>
   import('@/views/center/TaskCenter').then((mod) => ({ default: mod.default }))
 );
@@ -45,6 +48,15 @@ export const routes = [
     ),
     meta: { title: '首页' },
     children: [
+      {
+        index: true,
+        element: (
+          <AuthGuard>
+            <Dashboard />
+          </AuthGuard>
+        ),
+        meta: { title: '数据概览' },
+      },
       {
         path: 'task-center',
         element: (
