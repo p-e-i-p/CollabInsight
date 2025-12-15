@@ -5,16 +5,21 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { ProjectList } from '@/Components/ProjectList';
 import BugForm from './BugForm';
-import type { Project, Task } from '@/types/task';
+import type { Project, Bug as BugItem } from '@/types/bug';
+import {
+  fetchBugsByProject,
+  createBug,
+  updateBug,
+  deleteBug,
+  approveBug,
+  searchUserForBug,
+} from '@/request/api/bug/index';
 import {
   createProject,
-  createTask,
-  deleteTask,
   fetchProjects,
-  fetchTasksByProject,
+  updateProject,
+  deleteProject,
   searchUser,
-  searchUserForProject,
-  updateTask,
 } from '@/request/api/task';
 import { getUserProfile } from '@/request/api/user/profile';
 
@@ -25,14 +30,14 @@ interface AssigneeMap {
 export const Bug: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+  const [bugs, setBugs] = useState<BugItem[]>([]);
+  const [filteredBugs, setFilteredBugs] = useState<BugItem[]>([]);
   const [searchText, setSearchText] = useState('');
-  const [taskDetailsFilter, setTaskDetailsFilter] = useState<string | undefined>(undefined);
-  const [urgencyFilter, setUrgencyFilter] = useState<string | undefined>(undefined);
+  const [bugDetailsFilter, setBugDetailsFilter] = useState<string | undefined>(undefined);
+  const [severityFilter, setSeverityFilter] = useState<string | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
-  const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isBugModalVisible, setIsBugModalVisible] = useState(false);
+  const [editingBug, setEditingBug] = useState<BugItem | null>(null);
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string; role: string } | null>(
     null
   );
@@ -73,6 +78,16 @@ export const Bug: React.FC = () => {
     return map;
   }, [selectedProject]);
 
+  const isProjectLeader = useMemo(() => {
+    if (!selectedProject || !currentUser) return false;
+    // 兼容 leader 可能是对象或字符串
+    const leaderId =
+      typeof (selectedProject.leader as any)?._id === 'string'
+        ? (selectedProject.leader as any)._id
+        : (selectedProject.leader as any)?.toString?.() || selectedProject.leader;
+    return leaderId === currentUser.id;
+  }, [selectedProject, currentUser]);
+
   const fetchUser = async () => {
     try {
       const profile = await getUserProfile();
@@ -99,17 +114,40 @@ export const Bug: React.FC = () => {
     }
   };
 
-  const loadTasks = async (projectId: string) => {
+  const loadBugs = async (projectId: string) => {
     try {
       setLoading(true);
-      const res = await fetchTasksByProject(projectId);
-      setTasks(res);
-      setFilteredTasks(res);
+      const res = await fetchBugsByProject(projectId);
+      setBugs(res);
+      setFilteredBugs(res);
     } catch (error) {
       message.error('获取Bug失败');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchMemberForProject = async (keyword: string) => {
+    const res: any = await searchUser(keyword);
+    return res as Array<{ _id: string; username: string; role: string }>;
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      await deleteProject(projectId);
+      if (selectedProjectId === projectId) {
+        setSelectedProjectId(null);
+      }
+      loadProjects();
+    } catch (error) {
+      console.error('删除项目失败:', error);
+    }
+  };
+
+  const handleSearchMemberForBug = async (keyword: string) => {
+    if (!selectedProjectId) return [];
+    const res: any = await searchUserForBug(selectedProjectId, keyword);
+    return res as Array<{ _id: string; username: string; role: string }>;
   };
 
   // 初始化
@@ -121,91 +159,128 @@ export const Bug: React.FC = () => {
   // 项目切换加载Bug
   useEffect(() => {
     if (selectedProjectId) {
-      loadTasks(selectedProjectId);
+      loadBugs(selectedProjectId);
       setSearchText('');
-      setTaskDetailsFilter(undefined);
-      setUrgencyFilter(undefined);
+      setBugDetailsFilter(undefined);
+      setSeverityFilter(undefined);
+      setStatusFilter(undefined);
     }
   }, [selectedProjectId]);
 
   // 过滤Bug
   useEffect(() => {
-    let data = [...tasks];
+    let data = [...bugs];
     if (searchText) {
-      data = data.filter((t) => t.taskName.toLowerCase().includes(searchText.toLowerCase()));
+      data = data.filter((t) => t.bugName.toLowerCase().includes(searchText.toLowerCase()));
     }
-    if (taskDetailsFilter) {
+    if (bugDetailsFilter) {
       data = data.filter(
-        (t) =>
-          t.taskDetails && t.taskDetails.toLowerCase().includes(taskDetailsFilter.toLowerCase())
+        (t) => t.bugDetails && t.bugDetails.toLowerCase().includes(bugDetailsFilter.toLowerCase())
       );
     }
-    if (urgencyFilter) {
-      data = data.filter((t) => t.urgency === urgencyFilter);
+    if (severityFilter) {
+      data = data.filter((t) => t.severity === severityFilter);
     }
     if (statusFilter) {
       data = data.filter((t) => t.status === statusFilter);
     }
-    setFilteredTasks(data);
-  }, [tasks, searchText, taskDetailsFilter, urgencyFilter, statusFilter]);
+    setFilteredBugs(data);
+  }, [bugs, searchText, bugDetailsFilter, severityFilter, statusFilter]);
 
-  const handleAddTask = () => {
+  const handleAddBug = () => {
     if (!selectedProjectId) {
       message.warning('请先选择一个项目');
       return;
     }
-    setEditingTask(null);
-    setIsTaskModalVisible(true);
+    setEditingBug(null);
+    setIsBugModalVisible(true);
   };
 
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsTaskModalVisible(true);
+  const handleEditBug = (bug: BugItem) => {
+    setEditingBug(bug);
+    setIsBugModalVisible(true);
   };
 
-  const handleDeleteTask = (task: Task) => {
+  const handleDeleteBug = (bug: BugItem) => {
     Modal.confirm({
       title: '确认删除',
-      content: `确定要删除Bug"${task.taskName}"吗？`,
+      content: `确定要删除Bug"${bug.bugName}"吗？`,
       okText: '删除',
       okType: 'danger',
       cancelText: '取消',
       onOk: async () => {
-        await deleteTask(task._id);
-        message.success('删除成功');
-        if (selectedProjectId) {
-          loadTasks(selectedProjectId);
+        try {
+          await deleteBug(bug._id);
+          if (selectedProjectId) {
+            loadBugs(selectedProjectId);
+          }
+        } catch (error) {
+          console.error('删除Bug失败:', error);
         }
       },
     });
   };
 
-  const handleTaskSubmit = async (values: any) => {
+  const handleSubmitForReview = async (bug: BugItem) => {
+    if (!currentUser) return;
+    if (bug.status !== '已解决') {
+      message.warning('仅已解决的Bug可提交审核');
+      return;
+    }
+    try {
+      // 后端更新接口要求传 bugName，提交审核仅变更状态
+      await updateBug(bug._id, { status: '待审核', bugName: bug.bugName });
+      if (selectedProjectId) {
+        loadBugs(selectedProjectId);
+      }
+    } catch (error) {
+      console.error('提交审核失败:', error);
+    }
+  };
+
+  const handleBugSubmit = async (values: any) => {
     if (!selectedProjectId || !currentUser) return;
     const payload = {
-      taskName: values.taskName,
-      taskDetails: values.taskDetails,
+      bugName: values.bugName,
+      bugDetails: values.bugDetails,
       assignee: values.assignee,
       startDate: values.startDate ? values.startDate.toISOString() : undefined,
       deadline: values.deadline ? values.deadline.toISOString() : undefined,
-      urgency: values.urgency,
+      severity: values.severity,
       status: values.status,
     };
 
-    if (editingTask) {
-      await updateTask(editingTask._id, payload);
-      message.success('Bug更新成功');
-    } else {
-      await createTask(selectedProjectId, payload);
-      message.success('Bug创建成功');
+    try {
+      if (editingBug) {
+        await updateBug(editingBug._id, payload);
+      } else {
+        await createBug(selectedProjectId, payload);
+      }
+      setIsBugModalVisible(false);
+      loadBugs(selectedProjectId);
+    } catch (error) {
+      console.error('提交Bug失败:', error);
     }
-    setIsTaskModalVisible(false);
-    loadTasks(selectedProjectId);
   };
 
-  const handleRefreshTasks = () => {
+  const handleQuickApprove = async (bug: BugItem, approvalStatus: '通过' | '不通过') => {
+    if (bug.status !== '待审核') {
+      message.warning('只有待审核状态的Bug才能审核');
+      return;
+    }
+    try {
+      await approveBug(bug._id, { approvalStatus, reviewComment: '' });
+      if (selectedProjectId) {
+        loadBugs(selectedProjectId);
+      }
+    } catch (error) {
+      console.error('审核Bug失败:', error);
+    }
+  };
+
+  const handleRefreshBugs = () => {
     if (selectedProjectId) {
-      loadTasks(selectedProjectId);
+      loadBugs(selectedProjectId);
     }
   };
 
@@ -223,7 +298,7 @@ export const Bug: React.FC = () => {
   };
 
   const handleEditProject = async (_projectId: string, values: any) => {
-    await createProject({
+    await updateProject(_projectId, {
       name: values.projectName,
       description: values.projectDesc,
       status: values.status,
@@ -235,16 +310,11 @@ export const Bug: React.FC = () => {
     loadProjects();
   };
 
-  const handleSearchMemberForProject = async (keyword: string) => {
-    const res: any = await searchUser(keyword);
-    return res as Array<{ _id: string; username: string; role: string }>;
-  };
-
-  const taskColumns: ColumnsType<any> = [
+  const bugColumns: ColumnsType<any> = [
     {
       title: 'Bug名称',
-      dataIndex: 'taskName',
-      key: 'taskName',
+      dataIndex: 'bugName',
+      key: 'bugName',
       ellipsis: true,
       width: 150,
     },
@@ -253,7 +323,7 @@ export const Bug: React.FC = () => {
       dataIndex: ['assignee', 'username'],
       key: 'assignee',
       width: 120,
-      render: (_: any, record: Task) => record.assignee?.username || '-',
+      render: (_: any, record: BugItem) => record.assignee?.username || '-',
     },
     {
       title: '开始日期',
@@ -274,21 +344,22 @@ export const Bug: React.FC = () => {
     },
 
     {
-      title: '紧急程度',
-      dataIndex: 'urgency',
-      key: 'urgency',
+      title: '严重程度',
+      dataIndex: 'severity',
+      key: 'severity',
       width: 120,
-      render: (urgency: string) => {
+      render: (severity: string) => {
         let color = 'default';
-        if (urgency === '高') color = 'red';
-        else if (urgency === '中') color = 'orange';
-        return <Tag color={color}>{urgency || '普通'}</Tag>;
+        if (severity === '严重') color = 'red';
+        else if (severity === '高') color = 'orange';
+        else if (severity === '中') color = 'blue';
+        return <Tag color={color}>{severity || '低'}</Tag>;
       },
       sorter: (a: any, b: any) => {
-        const order = { 高: 3, 中: 2, 普通: 1 };
+        const order = { 严重: 5, 高: 4, 中: 3, 低: 2 };
         return (
-          (order[a.urgency as keyof typeof order] || 1) -
-          (order[b.urgency as keyof typeof order] || 1)
+          (order[a.severity as keyof typeof order] || 1) -
+          (order[b.severity as keyof typeof order] || 1)
         );
       },
     },
@@ -299,13 +370,15 @@ export const Bug: React.FC = () => {
       width: 120,
       render: (status: string) => {
         let color = 'default';
-        if (status === '已完成') color = 'green';
-        else if (status === '进行中') color = 'blue';
+        if (status === '已解决') color = 'green';
+        else if (status === '处理中') color = 'blue';
+        else if (status === '已关闭') color = 'purple';
         else if (status === '已取消') color = 'red';
-        return <Tag color={color}>{status || '待办'}</Tag>;
+        else if (status === '待审核') color = 'orange';
+        return <Tag color={color}>{status || '待处理'}</Tag>;
       },
       sorter: (a: any, b: any) => {
-        const order = { 已完成: 4, 进行中: 3, 待办: 2, 已取消: 1 };
+        const order = { 已解决: 6, 已关闭: 5, 处理中: 4, 待审核: 3, 待处理: 2, 已取消: 1 };
         return (
           (order[a.status as keyof typeof order] || 1) -
           (order[b.status as keyof typeof order] || 1)
@@ -313,17 +386,67 @@ export const Bug: React.FC = () => {
       },
     },
     {
+      title: '审核状态',
+      dataIndex: 'approvalStatus',
+      key: 'approvalStatus',
+      width: 120,
+      render: (approvalStatus: string) => {
+        let color = 'default';
+        if (approvalStatus === '通过') color = 'green';
+        else if (approvalStatus === '不通过') color = 'red';
+        return <Tag color={color}>{approvalStatus || '待审核'}</Tag>;
+      },
+      sorter: (a: any, b: any) => {
+        const order = { 通过: 3, 不通过: 2, 待审核: 1 };
+        return (
+          (order[a.approvalStatus as keyof typeof order] || 1) -
+          (order[b.approvalStatus as keyof typeof order] || 1)
+        );
+      },
+    },
+    {
       title: '操作',
       key: 'action',
       fixed: 'right',
-      width: 130,
+      width: 180,
 
-      render: (_: any, record: Task) => (
+      render: (_: any, record: BugItem) => (
         <Space size="middle">
-          <Button type="link" size="small" onClick={() => handleEditTask(record)}>
+          <Button type="link" size="small" onClick={() => handleEditBug(record)}>
             编辑
           </Button>
-          <Button type="link" size="small" danger onClick={() => handleDeleteTask(record)}>
+          {record.assignee?._id === currentUser?.id && (
+            <Button
+              type="link"
+              size="small"
+              disabled={record.status !== '已解决'}
+              onClick={() => handleSubmitForReview(record)}
+            >
+              提交审核
+            </Button>
+          )}
+          {isProjectLeader && (
+            <>
+              <Button
+                type="link"
+                size="small"
+                disabled={record.status !== '待审核'}
+                onClick={() => handleQuickApprove(record, '通过')}
+              >
+                通过
+              </Button>
+              <Button
+                type="link"
+                size="small"
+                danger
+                disabled={record.status !== '待审核'}
+                onClick={() => handleQuickApprove(record, '不通过')}
+              >
+                打回
+              </Button>
+            </>
+          )}
+          <Button type="link" size="small" danger onClick={() => handleDeleteBug(record)}>
             删除
           </Button>
         </Space>
@@ -344,12 +467,9 @@ export const Bug: React.FC = () => {
             onSearch={(value) => {
               loadProjects(value);
             }}
-            onAddTask={(projectKey) => {
-              setSelectedProjectId(projectKey);
-              handleAddTask();
-            }}
             onCreateProject={handleCreateProject}
             onEditProject={handleEditProject}
+            onDeleteProject={handleDeleteProject}
             onSearchMember={handleSearchMemberForProject}
           />
         </div>
@@ -360,7 +480,6 @@ export const Bug: React.FC = () => {
             {selectedProject ? (
               <div className="h-full flex flex-col">
                 {/* 项目信息部分 */}
-
 
                 {/* Bug列表部分 */}
                 <div className="flex-1 flex flex-col overflow-hidden mt-6">
@@ -378,20 +497,21 @@ export const Bug: React.FC = () => {
                       <Input
                         placeholder="Bug详情"
                         prefix={<SearchOutlined />}
-                        value={taskDetailsFilter}
-                        onChange={(e) => setTaskDetailsFilter(e.target.value)}
+                        value={bugDetailsFilter}
+                        onChange={(e) => setBugDetailsFilter(e.target.value)}
                         style={{ width: 120 }}
                       />
                       <Select
-                        placeholder="紧急程度"
+                        placeholder="严重程度"
                         style={{ width: 100 }}
                         allowClear
-                        value={urgencyFilter}
-                        onChange={(value) => setUrgencyFilter(value)}
+                        value={severityFilter}
+                        onChange={(value) => setSeverityFilter(value)}
                       >
+                        <Select.Option value="严重">严重</Select.Option>
                         <Select.Option value="高">高</Select.Option>
                         <Select.Option value="中">中</Select.Option>
-                        <Select.Option value="普通">普通</Select.Option>
+                        <Select.Option value="低">低</Select.Option>
                       </Select>
                       <Select
                         placeholder="Bug状态"
@@ -400,14 +520,16 @@ export const Bug: React.FC = () => {
                         value={statusFilter}
                         onChange={(value) => setStatusFilter(value)}
                       >
-                        <Select.Option value="待办">待办</Select.Option>
-                        <Select.Option value="进行中">进行中</Select.Option>
-                        <Select.Option value="已完成">已完成</Select.Option>
+                        <Select.Option value="待处理">待处理</Select.Option>
+                        <Select.Option value="处理中">处理中</Select.Option>
+                        <Select.Option value="待审核">待审核</Select.Option>
+                        <Select.Option value="已解决">已解决</Select.Option>
+                        <Select.Option value="已关闭">已关闭</Select.Option>
                         <Select.Option value="已取消">已取消</Select.Option>
                       </Select>
                       <Button
                         icon={<ReloadOutlined />}
-                        onClick={handleRefreshTasks}
+                        onClick={handleRefreshBugs}
                         title="刷新Bug列表"
                         size="small"
                       >
@@ -416,10 +538,10 @@ export const Bug: React.FC = () => {
                       <Button
                         type="primary"
                         icon={<PlusOutlined />}
-                        onClick={handleAddTask}
+                        onClick={handleAddBug}
                         size="small"
                       >
-                        添加
+                        添加Bug
                       </Button>
                     </div>
                   </div>
@@ -428,9 +550,11 @@ export const Bug: React.FC = () => {
                   <div className="flex-1 overflow-auto">
                     <Table
                       loading={loading}
-                      columns={taskColumns}
-                      dataSource={filteredTasks}
+                      columns={bugColumns}
+                      dataSource={filteredBugs}
                       rowKey={(record) => record._id}
+                      scroll={{ x: 'max-content' }}
+                      sticky
                       locale={{
                         emptyText: '暂无Bug数据，请点击"添加Bug"按钮创建新Bug',
                       }}
@@ -455,9 +579,9 @@ export const Bug: React.FC = () => {
       </div>
 
       <BugForm
-        visible={isTaskModalVisible}
-        onCancel={() => setIsTaskModalVisible(false)}
-        onOk={handleTaskSubmit}
+        visible={isBugModalVisible}
+        onCancel={() => setIsBugModalVisible(false)}
+        onOk={handleBugSubmit}
         projectKey={selectedProjectId || undefined}
         currentUserRole={currentUser?.role || '成员'}
         currentUser={
@@ -469,22 +593,20 @@ export const Bug: React.FC = () => {
         }
         userData={assigneeMap}
         initialValues={
-          editingTask
+          editingBug
             ? {
-                taskName: editingTask.taskName,
-                assignee: editingTask.assignee?._id,
-                startDate: editingTask.startDate ? dayjs(editingTask.startDate) : dayjs(),
-                deadline: editingTask.deadline
-                  ? dayjs(editingTask.deadline)
-                  : dayjs().add(7, 'day'),
-                urgency: editingTask.urgency,
-                status: editingTask.status,
-                taskDetails: editingTask.taskDetails || '',
+                bugName: editingBug.bugName,
+                assignee: editingBug.assignee?._id,
+                startDate: editingBug.startDate ? dayjs(editingBug.startDate) : dayjs(),
+                deadline: editingBug.deadline ? dayjs(editingBug.deadline) : dayjs().add(7, 'day'),
+                severity: editingBug.severity,
+                status: editingBug.status,
+                bugDetails: editingBug.bugDetails || '',
               }
             : undefined
         }
-        isEdit={!!editingTask}
-        onSearchUser={undefined}
+        isEdit={!!editingBug}
+        onSearchUser={handleSearchMemberForBug}
       />
     </div>
   );

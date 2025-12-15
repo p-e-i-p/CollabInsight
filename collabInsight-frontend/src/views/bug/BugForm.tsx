@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, DatePicker, Select } from 'antd';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import dayjs from 'dayjs';
 import type { FormInstance } from 'antd/es/form';
+
 
 interface BugFormProps {
   visible: boolean;
@@ -12,21 +15,26 @@ interface BugFormProps {
   currentUser: { id: string; name: string; role: string };
   userData: Record<string, { name: string; role: string }>;
   initialValues?: {
-    taskName: string;
+    bugName: string;
     assignee: string;
     startDate: dayjs.Dayjs;
     deadline: dayjs.Dayjs;
-    urgency: string;
+    severity: string;
     status: string;
-    taskDetails: string;
+    bugDetails: string;
   };
   isEdit?: boolean;
-  onSearchUser?: (keyword: string) => Promise<void>;
+  isApproval?: boolean;
+  onSearchUser?: (
+    keyword: string
+  ) => Promise<Array<{ _id: string; username: string; role: string }>>;
 }
 
+
+
 /**
- * 任务表单组件
- * 用于添加新任务，支持基于角色的任务分配
+ * Bug表单组件
+ * 用于添加新Bug或编辑Bug，支持基于角色的Bug分配和组长审批
  */
 export const BugForm: React.FC<BugFormProps> = ({
   visible,
@@ -38,28 +46,76 @@ export const BugForm: React.FC<BugFormProps> = ({
   userData,
   initialValues,
   isEdit = false,
+  isApproval = false,
+  onSearchUser,
 }) => {
+
   const [form] = Form.useForm();
   const BugFormRef = React.useRef<FormInstance>(null);
 
-  // 初始化任务分配选项
-  const taskAssigneeOptions = React.useMemo(() => {
+  // 初始化Bug分配选项
+  const bugAssigneeOptions = React.useMemo(() => {
     return Object.entries(userData).map(([id, user]) => ({
       label: `${user.name} (${user.role})`,
       value: id
     }));
   }, [userData]);
 
-  // 根据当前用户角色过滤任务分配选项
-  const filteredTaskAssigneeOptions = React.useMemo(() => {
+  // 根据当前用户角色过滤Bug分配选项
+  const filteredBugAssigneeOptions = React.useMemo(() => {
     // 如果是普通成员，只能分配给自己
     if (currentUserRole === '成员') {
-      const selfOption = taskAssigneeOptions.find(opt => opt.value === currentUser.id);
+      const selfOption = bugAssigneeOptions.find(opt => opt.value === currentUser.id);
       return selfOption ? [selfOption] : [];
     }
     // 组长可以分配给任何人
-    return taskAssigneeOptions;
-  }, [taskAssigneeOptions, currentUserRole, currentUser.id]);
+    return bugAssigneeOptions;
+  }, [bugAssigneeOptions, currentUserRole, currentUser.id]);
+
+  // 支持远程搜索时的分配人选项
+  const [assigneeOptions, setAssigneeOptions] = React.useState(filteredBugAssigneeOptions);
+  const enableRemoteSearch = currentUserRole === '组长' && !!onSearchUser;
+
+  React.useEffect(() => {
+    setAssigneeOptions(filteredBugAssigneeOptions);
+  }, [filteredBugAssigneeOptions]);
+
+  const quillModules = React.useMemo(
+    () => ({
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ color: [] }, { background: [] }],
+        ['link'],
+        ['clean'],
+      ],
+    }),
+    []
+  );
+
+  const handleSearchAssignee = async (keyword: string) => {
+    if (!enableRemoteSearch || !onSearchUser) return;
+    try {
+      const list = await onSearchUser(keyword);
+      const remoteOptions = (list || []).map((u) => ({
+        label: `${u.username} (${u.role === 'admin' ? '组长' : '成员'})`,
+        value: u._id,
+      }));
+
+      // 组长可在项目成员基础上合并搜索结果
+      const merged = [...filteredBugAssigneeOptions];
+      remoteOptions.forEach((opt) => {
+        if (!merged.find((item) => item.value === opt.value)) {
+          merged.push(opt);
+        }
+      });
+      setAssigneeOptions(merged);
+    } catch (error) {
+      console.error('搜索分配人失败:', error);
+    }
+  };
+
 
   // 当模态框可见性变化时，填充初始值
   useEffect(() => {
@@ -68,15 +124,17 @@ export const BugForm: React.FC<BugFormProps> = ({
       if (initialValues) {
         form.setFieldsValue(initialValues);
       } else {
+
         form.setFieldsValue({
-          taskName: '',
+          bugName: '',
           assignee: currentUser.id, // 默认分配给当前用户
           startDate: dayjs(),
           deadline: dayjs().add(7, 'day'),
-          urgency: '普通',
-          status: '待办',
-          taskDetails: ''
+          severity: '中',
+          status: '待处理',
+          bugDetails: ''
         });
+
       }
     }
   }, [visible, initialValues, form, currentUser.id]);
@@ -97,17 +155,19 @@ export const BugForm: React.FC<BugFormProps> = ({
   };
 
   return (
+
     <Modal
-      title={isEdit ? '编辑任务' : '添加新任务'}
+      title={isApproval ? '审核Bug' : (isEdit ? '编辑Bug' : '添加新Bug')}
       open={visible}
       onOk={handleOk}
       onCancel={onCancel}
       destroyOnClose={true}
-      width={700}
+      width={isApproval ? 700 : 600}
       centered={true}
       maskClosable={false}
       styles={{ body: { padding: '20px' } }}
     >
+
       <Form
         form={form}
         layout="vertical"
@@ -115,34 +175,44 @@ export const BugForm: React.FC<BugFormProps> = ({
         style={{ maxWidth: '100%' }}
         ref={BugFormRef}
       >
-        <Form.Item
-          name="taskName"
-          label="任务名称"
-          rules={[{ required: true, message: '请输入任务名称' }]}
-          style={{ marginBottom: 16 }}
-        >
-          <Input
-            placeholder="请输入任务名称"
-            showCount
-            maxLength={50}
-            size="middle"
-            style={{ borderRadius: 6 }}
-          />
-        </Form.Item>
 
-        <Form.Item
-          name="assignee"
-          label="任务分配"
-          rules={[{ required: true, message: '请选择任务分配人' }]}
-          style={{ marginBottom: 16 }}
-        >
-          <Select
-            placeholder="请选择任务分配人"
-            size="middle"
-            style={{ borderRadius: 6 }}
-            options={filteredTaskAssigneeOptions}
-          />
-        </Form.Item>
+        {!isApproval && (
+          <>
+            <Form.Item
+              name="bugName"
+              label="Bug名称"
+              rules={[{ required: true, message: '请输入Bug名称' }]}
+              style={{ marginBottom: 16 }}
+            >
+              <Input
+                placeholder="请输入Bug名称"
+                showCount
+                maxLength={50}
+                size="middle"
+                style={{ borderRadius: 6 }}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="assignee"
+              label="Bug分配"
+              rules={[{ required: true, message: '请选择Bug分配人' }]}
+              style={{ marginBottom: 16 }}
+            >
+              <Select
+                placeholder="请选择Bug分配人"
+                size="middle"
+                style={{ borderRadius: 6 }}
+                options={assigneeOptions}
+                showSearch={enableRemoteSearch}
+                filterOption={false}
+                onSearch={handleSearchAssignee}
+                onFocus={() => handleSearchAssignee('')}
+              />
+            </Form.Item>
+          </>
+        )}
+
 
         <Form.Item
           name="startDate"
@@ -208,56 +278,121 @@ export const BugForm: React.FC<BugFormProps> = ({
           />
         </Form.Item>
 
+
         <Form.Item
-          name="urgency"
-          label="紧急程度"
-          rules={[{ required: true, message: '请选择紧急程度' }]}
+          name="severity"
+          label="严重程度"
+          rules={[{ required: true, message: '请选择严重程度' }]}
           style={{ marginBottom: 16 }}
         >
           <Select
-            placeholder="请选择紧急程度"
+            placeholder="请选择严重程度"
             size="middle"
             style={{ borderRadius: 6 }}
           >
+            <Select.Option value="严重">严重</Select.Option>
             <Select.Option value="高">高</Select.Option>
             <Select.Option value="中">中</Select.Option>
-            <Select.Option value="普通">普通</Select.Option>
+            <Select.Option value="低">低</Select.Option>
           </Select>
         </Form.Item>
 
-        <Form.Item
-          name="status"
-          label="任务状态"
-          rules={[{ required: true, message: '请选择任务状态' }]}
-          style={{ marginBottom: 16 }}
-        >
-          <Select
-            placeholder="请选择任务状态"
-            size="middle"
-            style={{ borderRadius: 6 }}
-          >
-            <Select.Option value="待办">待办</Select.Option>
-            <Select.Option value="进行中">进行中</Select.Option>
-            <Select.Option value="已完成">已完成</Select.Option>
-            <Select.Option value="已取消">已取消</Select.Option>
-          </Select>
-        </Form.Item>
+
+
+        {!isApproval && (
+          <>
+            <Form.Item
+              name="status"
+              label="Bug状态"
+              rules={[{ required: true, message: '请选择Bug状态' }]}
+              style={{ marginBottom: 16 }}
+            >
+              <Select
+                placeholder="请选择Bug状态"
+                size="middle"
+                style={{ borderRadius: 6 }}
+              >
+                <Select.Option value="待处理">待处理</Select.Option>
+                <Select.Option value="处理中">处理中</Select.Option>
+                <Select.Option value="待审核">待审核</Select.Option>
+                <Select.Option value="已解决">已解决</Select.Option>
+                <Select.Option value="已关闭">已关闭</Select.Option>
+                <Select.Option value="已取消">已取消</Select.Option>
+              </Select>
+            </Form.Item>
+          </>
+        )}
+
+
+        {isApproval && (
+          <>
+            <Form.Item
+              name="approvalStatus"
+              label="审核结果"
+              rules={[{ required: true, message: '请选择审核结果' }]}
+              style={{ marginBottom: 16 }}
+            >
+              <Select
+                placeholder="请选择审核结果"
+                size="middle"
+                style={{ borderRadius: 6 }}
+              >
+                <Select.Option value="通过">通过</Select.Option>
+                <Select.Option value="不通过">不通过</Select.Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="reviewComment"
+              label="审核意见"
+              style={{ marginBottom: 16 }}
+            >
+              <Input.TextArea
+                placeholder="请输入审核意见"
+                size="middle"
+                style={{ borderRadius: 6 }}
+                rows={3}
+                showCount
+                maxLength={200}
+              />
+            </Form.Item>
+          </>
+        )}
 
         <Form.Item
-          name="taskDetails"
-          label="任务详情"
-          rules={[{ required: true, message: '请输入任务详情' }]}
+          name="bugDetails"
+          label="Bug详情"
+          rules={[{ required: true, message: '请输入Bug详情' }]}
           style={{ marginBottom: 16 }}
+          getValueFromEvent={(content) => content}
         >
-          <Input.TextArea
-            placeholder="请输入任务详情"
-            size="middle"
-            style={{ borderRadius: 6 }}
-            rows={3}
-            showCount
-            maxLength={200}
+          <ReactQuill
+            theme="snow"
+            placeholder="请输入Bug详情"
+            modules={quillModules}
+            value={form.getFieldValue('bugDetails')}
+            onChange={(content: string) => {
+              form.setFieldsValue({ bugDetails: content });
+            }}
+            style={{ backgroundColor: 'white' }}
           />
         </Form.Item>
+        {isEdit && !isApproval && (
+          <Form.Item
+            name="solution"
+            label="解决方案"
+            style={{ marginBottom: 16 }}
+          >
+            <Input.TextArea
+              placeholder="请输入解决方案（可选）"
+              size="middle"
+              style={{ borderRadius: 6 }}
+              rows={3}
+              showCount
+              maxLength={500}
+            />
+          </Form.Item>
+        )}
       </Form>
     </Modal>
   );

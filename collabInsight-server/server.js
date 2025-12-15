@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -11,6 +12,7 @@ const connectDB = require('./config/db');
 const userRoutes = require('./routes/users');
 const registerRoutes = require('./routes/register');
 const projectRoutes = require('./routes/projects');
+const bugRoutes = require('./routes/bugs');
 
 // 初始化 Express 应用
 const app = express();
@@ -31,6 +33,7 @@ app.use('/api', userRoutes);
 app.use('/api/userInfo', userRoutes);
 app.use('/api/register', registerRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/bugs', bugRoutes);
 
 // 根路由
 app.get('/', (req, res) => {
@@ -46,3 +49,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`服务器运行在端口 ${PORT}`);
 });
+
