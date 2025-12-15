@@ -1,149 +1,231 @@
-import React from 'react';
-import BaseTable, { type FilterFormValues } from '@/Components/BaseTable';
-import { DatePicker, Input, Select, Space } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Input, Button, Avatar, Badge, message as antdMessage, Popover, Select } from 'antd';
+import dayjs from 'dayjs';
+import ProjectList from '@/Components/ProjectList';
+import type { Project } from '@/types/task';
+import { fetchProjects } from '@/request/api/task';
 
-// 定义接口类型
-interface User {
+interface LocalChatMessage {
   id: string;
-  name: string;
-  age: number;
-  email: string;
-  status: 'active' | 'inactive';
+  projectId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  type: 'text' | 'image';
+  createdAt: string;
 }
 
 const Message: React.FC = () => {
-  // 定义表格数据类型
-  interface User {
-    id: string;
-    name: string;
-    age: number;
-    email: string;
-    status: 'active' | 'inactive';
-    createTime: string;
-  }
+  const currentUser = { id: 'me', name: '我', avatar: '' }; // TODO: 接入真实用户信息
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [inputValue, setInputValue] = useState('');
+  const [messages, setMessages] = useState<LocalChatMessage[]>([]);
+  const messageListRef = React.useRef<HTMLDivElement>(null);
+  const emojiList = ['😀', '😁', '😂', '😊', '😎', '🤔', '😢', '😭', '👍', '👏', '🔥', '❤️', '💪', '🚀'];
 
-  // 定义过滤表单值类型（与过滤项对应）
-  interface UserFilterFormValues extends FilterFormValues {
-    name?: string; // 姓名过滤
-    status?: 'active' | 'inactive' | ''; // 状态过滤
-    createTime?: [string, string]; // 时间范围过滤
-  }
+  // 加载项目列表（左侧联调）
+  const loadProjects = async (keyword?: string) => {
+    try {
+      const res = await fetchProjects(keyword ? { keyword } : undefined);
+      setProjects(res);
+      if (!selectedProjectId && res.length > 0) {
+        setSelectedProjectId(res[0]._id);
+      } else if (selectedProjectId && !res.find((p) => p._id === selectedProjectId) && res.length > 0) {
+        setSelectedProjectId(res[0]._id);
+      }
+    } catch (error) {
+      console.error(error);
+      antdMessage.error('获取项目列表失败');
+    }
+  };
 
-  // 定义表格数据类型
-    // 模拟数据获取函数（整合分页+过滤参数）
-    const fetchUserList = async (params: {
-      page: number;
-      pageSize: number;
-      name?: string;
-      status?: string;
-      createTime?: [string, string];
-    }) => {
-      console.log('请求参数:', params);
-      // 模拟接口延迟
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      // 模拟根据过滤参数筛选数据（实际项目中由后端处理）
-      const total = 100;
-      const list = Array.from({ length: params.pageSize })
-        .map((_, i) => ({
-          id: `${params.page}-${i}`,
-          name: `用户${params.page}-${i}`,
-          age: 20 + i,
-          email: `user${params.page}-${i}@example.com`,
-          status: i % 2 === 0 ? 'active' : 'inactive',
-          createTime: `2025-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
-        }))
-        // 前端模拟过滤（实际项目中无需前端过滤）
-        .filter((item) => {
-          if (params.name && !item.name.includes(params.name)) return false;
-          if (params.status && item.status !== params.status) return false;
-          if (params.createTime) {
-            const [start, end] = params.createTime;
-            if (item.createTime < start || item.createTime > end) return false;
-          }
-          return true;
-        });
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
-      return { list, total: list.length > 0 ? total : 0 };
+  // 右侧 UI 展示（本地示例，不请求后端）
+  const filteredMessages = useMemo(
+    () => messages.filter((m) => m.projectId === selectedProjectId),
+    [messages, selectedProjectId]
+  );
+
+  const currentProject = useMemo(
+    () => projects.find((p) => p._id === selectedProjectId),
+    [projects, selectedProjectId]
+  );
+
+  const memberOptions = useMemo(
+    () =>
+      (currentProject?.members || []).map((m: any) => ({
+        label: m.username || m._id,
+        value: m._id,
+      })),
+    [currentProject]
+  );
+
+  const handleSend = () => {
+    const text = inputValue.trim();
+    if (!text || !selectedProjectId) return;
+    const newMsg: LocalChatMessage = {
+      id: `local-${Date.now()}`,
+      projectId: selectedProjectId,
+      senderId: currentUser.id,
+      senderName: currentUser.name,
+      content: text,
+      type: 'text',
+      createdAt: new Date().toISOString(),
     };
+    setMessages((prev) => [...prev, newMsg]);
+    setInputValue('');
+    requestAnimationFrame(() => {
+      messageListRef.current?.scrollTo({ top: messageListRef.current.scrollHeight, behavior: 'smooth' });
+    });
+  };
 
-    // 过滤表单配置（自定义过滤项）
-    const filterFormItems = [
-      {
-        name: 'name',
-        label: '姓名',
-        component: <Input placeholder="请输入姓名搜索" />,
-        wrapperCol: { span: 16 },
-      },
-      {
-        name: 'status',
-        label: '状态',
-        component: (
-          <Select placeholder="请选择状态" style={{ width: '100%' }}>
-            <Select.Option value="active">活跃</Select.Option>
-            <Select.Option value="inactive">禁用</Select.Option>
-          </Select>
-        ),
-        wrapperCol: { span: 16 },
-      },
-      {
-        name: 'createTime',
-        label: '创建时间',
-        component: <DatePicker.RangePicker placeholder={['开始时间', '结束时间']} />,
-        wrapperCol: { span: 20 },
-      },
-    ];
-
-    // 表格列配置
-    const columns = [
-      { title: 'ID', dataIndex: 'id', key: 'id', width: 100 },
-      { title: '姓名', dataIndex: 'name', key: 'name' },
-      { title: '年龄', dataIndex: 'age', key: 'age', width: 80 },
-      { title: '邮箱', dataIndex: 'email', key: 'email' },
-      {
-        title: '状态',
-        dataIndex: 'status',
-        key: 'status',
-        width: 100,
-        render: (status: string) => (
-          <span style={{ color: status === 'active' ? '#52c41a' : '#ff4d4f' }}>
-            {status === 'active' ? '活跃' : '禁用'}
-          </span>
-        ),
-      },
-      { title: '创建时间', dataIndex: 'createTime', key: 'createTime', width: 150 },
-      {
-        title: '操作',
-        key: 'action',
-        width: 120,
-        render: (_: unknown, record: User) => (
-          <Space size="middle">
-            <button style={{ color: '#1890ff' }} onClick={() => console.log('编辑', record)}>
-              编辑
-            </button>
-            <button style={{ color: '#ff4d4f' }} onClick={() => console.log('删除', record)}>
-              删除
-            </button>
-          </Space>
-        ),
-      },
-    ];
+  const renderBubble = (msg: LocalChatMessage) => {
+    const isMine = msg.senderId === currentUser.id;
     return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">消息中心</h1>
-      <BaseTable<User, UserFilterFormValues>
-        fetcher={fetchUserList}
-        columns={columns}
-        rowKey="id"
-        loadingText="加载消息列表..."
-        emptyText="暂无消息数据"
-        className="shadow-md rounded-lg"
-        // 过滤相关配置
-        filterFormItems={filterFormItems}
-        filterFormLayout="horizontal"
-        showFilterButton={true}
-        defaultFilterVisible={false}
-        initialParams={{ status: '' }} // 初始过滤参数
-      />
+      <div
+        key={msg.id}
+        className={`flex mb-3 ${isMine ? 'justify-end' : 'justify-start'}`}
+      >
+        {!isMine && (
+          <Avatar size={32} className="mr-2">
+            {msg.senderName[0]}
+          </Avatar>
+        )}
+        <div className={`max-w-[70%] rounded-lg px-3 py-2 shadow-sm ${isMine ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
+          {!isMine && <div className="text-xs text-gray-500 mb-1">{msg.senderName}</div>}
+          <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+          <div className="text-[10px] text-gray-400 mt-1 text-right">
+            {dayjs(msg.createdAt).format('HH:mm')}
+          </div>
+        </div>
+        {isMine && (
+          <Avatar size={32} className="ml-2" style={{ backgroundColor: '#1677ff' }}>
+            {currentUser.name[0]}
+          </Avatar>
+        )}
+      </div>
+    );
+  };
+
+  // 项目列表数据适配 ProjectList
+  const projectDataForList = useMemo(() => {
+    const record: Record<string, any> = {};
+    projects.forEach((proj) => {
+      record[proj._id] = {
+        projectName: proj.name,
+        projectDesc: proj.description || '',
+        status: proj.status,
+        priority: proj.priority,
+        deadline: proj.deadline,
+        tasks: [],
+        members: proj.members || [],
+        leader: proj.leader,
+      };
+    });
+    return record;
+  }, [projects]);
+
+  return (
+    <div
+      className="min-h-0 h-full flex gap-4 p-4 bg-gray-50"
+      style={{ overflow: 'hidden' }}
+    >
+      {/* 左侧项目列表（真实接口） */}
+      <div
+        className="flex-shrink-0 h-full"
+        style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}
+      >
+        <ProjectList
+          projectData={projectDataForList}
+          selectedProjectKey={selectedProjectId}
+          onItemClick={(item) => setSelectedProjectId(item.key as string)}
+          onAdd={() => {}}
+          onSearch={(keyword) => loadProjects(keyword)}
+          onCreateProject={undefined}
+          onEditProject={undefined}
+          onDeleteProject={undefined}
+          onSearchMember={undefined}
+          onAddTask={undefined}
+        />
+      </div>
+
+      {/* 右侧聊天窗口（静态本地消息示例） */}
+      <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <header className="p-3 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <div className="text-base font-semibold">
+              {currentProject?.name || '请选择项目'}
+            </div>
+            <div className="text-xs text-gray-500">
+              成员 {currentProject?.members?.length || 0} 人
+            </div>
+          </div>
+          <Badge status="default" text="本地示例（未接实时/后端消息）" />
+        </header>
+
+        <section
+          ref={messageListRef}
+          className="flex-1 min-h-0 overflow-y-auto px-4 py-3 bg-gray-50"
+        >
+          {filteredMessages.map(renderBubble)}
+        </section>
+
+        <footer className="p-3 border-t border-gray-200 bg-white">
+          <div className="mb-2 flex items-center gap-2">
+            <Popover
+              content={
+                <div className="flex flex-wrap max-w-[220px] gap-1">
+                  {emojiList.map((e) => (
+                    <Button
+                      key={e}
+                      size="small"
+                      onClick={() => setInputValue((v) => v + e)}
+                    >
+                      {e}
+                    </Button>
+                  ))}
+                </div>
+              }
+              trigger="click"
+            >
+              <Button size="small">🙂 表情</Button>
+            </Popover>
+            <Select
+              allowClear
+              placeholder="@成员"
+              size="small"
+              style={{ width: 140 }}
+              options={memberOptions}
+              onSelect={(_, option) => {
+                const name = option.label as string;
+                setInputValue((v) => `${v}@${name} `);
+              }}
+            />
+            <div className="text-xs text-gray-400 flex-1">仅本地示例，未接入上传/文件</div>
+          </div>
+          <Input.TextArea
+            rows={3}
+            placeholder="输入消息，按回车发送"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onPressEnter={(e) => {
+              if (!e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+          />
+          <div className="mt-2 flex justify-end items-center">
+            <Button type="primary" onClick={handleSend} disabled={!selectedProjectId}>
+              发送
+            </Button>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 };

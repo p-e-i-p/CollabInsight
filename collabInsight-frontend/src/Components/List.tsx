@@ -36,7 +36,7 @@ export interface CustomListProps {
 
   /** 组件宽度（默认250px） */
   width?: number;
-  /** 组件高度，默认100%，便于父元素 h-full 填充 */
+  /** 组件高度（默认100%，便于父元素 h-full 填充） */
   height?: number | string;
   /** 默认当前页（默认1） */
   defaultCurrentPage?: number;
@@ -83,26 +83,19 @@ const CustomList: React.FC<CustomListProps> = ({
   useEffect(() => {
     if (listItems.length === 0) {
       setCurrentData([]);
-      // 没有数据时始终回到第一页
-      if (currentPage !== 1) setCurrentPage(1);
       return;
     }
 
-    // 如果当前页超出最大页，回退到最后一页
-    const maxPage = Math.max(1, Math.ceil(listItems.length / pageSize));
-    const safePage = Math.min(currentPage, maxPage);
-    if (safePage !== currentPage) {
-      setCurrentPage(safePage);
-      return; // 等待下一次渲染再切片
-    }
-
-    const startIndex = (safePage - 1) * pageSize;
+    // 计算起始索引和结束索引
+    const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
 
+    // 筛选当前页数据
     const pageData = listItems.slice(startIndex, endIndex);
     setCurrentData(pageData);
 
-    onPageChange?.(safePage, pageSize);
+    // 暴露页码变更给父组件
+    onPageChange?.(currentPage, pageSize);
   }, [currentPage, pageSize, listItems, onPageChange]);
 
   // 处理搜索事件
@@ -188,7 +181,10 @@ const CustomList: React.FC<CustomListProps> = ({
   return (
     <div
       className="rounded-lg border border-gray-200 overflow-hidden flex flex-col "
-      style={{ width: `${width}px`, height }}
+      style={{
+        width: `${width}px`,
+        height: typeof height === 'number' ? `${height}px` : height,
+      }}
     >
       {/* 1. 标题区域 */}
       <div className="p-2 border-b border-gray-200">
@@ -233,7 +229,6 @@ const CustomList: React.FC<CustomListProps> = ({
           total={total} // 总数据量（从完整数据长度获取）
           onChange={handlePaginationChange} // 分页切换事件
           showSizeChanger={false} // 隐藏每页条数切换（如需显示可改为true）
-          hideOnSinglePage={false} // 始终显示分页，避免“消失”感
           aria-label="分页控件"
           size="small"
         />

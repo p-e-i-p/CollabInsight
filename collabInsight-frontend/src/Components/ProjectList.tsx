@@ -34,6 +34,8 @@ interface ProjectListProps {
   onSearchMember?: (
     keyword: string
   ) => Promise<Array<{ _id: string; username: string; role: string }>>;
+  /** 列表高度，默认100%填满父容器 */
+  height?: number | string;
 }
 
 /**
@@ -51,6 +53,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   onEditProject,
   onCreateProject,
   onSearchMember,
+  height = '100%',
 }) => {
   // 左侧列表：展示所有项目名称（转换为 ListItem 格式）
   const taskItems: ListItem[] = Object.entries(projectData).map(([key, project]) => ({
@@ -307,7 +310,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   };
 
   return (
-    <div className="project-list-container h-full">
+    <div className="project-list-container h-full" style={{ minHeight: 0 }}>
       <CustomList
         title="全部项目列表"
         listItems={taskItems}
@@ -334,6 +337,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         onAddTask={(item) => {
           showTaskModal(item.key);
         }}
+        height={height}
       />
 
       {/* 新增/编辑项目弹窗 */}
