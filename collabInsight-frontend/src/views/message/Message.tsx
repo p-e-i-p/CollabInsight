@@ -1,9 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Input, Button, Avatar, Badge, message as antdMessage, Popover, Select } from 'antd';
 import dayjs from 'dayjs';
+import { io, type Socket } from 'socket.io-client';
 import ProjectList from '@/Components/ProjectList';
 import type { Project } from '@/types/task';
 import { fetchProjects } from '@/request/api/task';
+import { auth } from '@/utils/http';
+import { getUserProfile } from '@/request/api/user/profile';
+import type { UserProfile } from '@/request/type';
+import { fetchProjectMessages } from '@/request/api/message';
 
 interface LocalChatMessage {
   id: string;
@@ -16,13 +21,50 @@ interface LocalChatMessage {
 }
 
 const Message: React.FC = () => {
-  const currentUser = { id: 'me', name: '我', avatar: '' }; // TODO: 接入真实用户信息
+  const [currentUser, setCurrentUser] = useState<Pick<UserProfile, '_id' | 'username'>>({
+    _id: '',
+    username: '我',
+  });
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<LocalChatMessage[]>([]);
-  const messageListRef = React.useRef<HTMLDivElement>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
   const emojiList = ['😀', '😁', '😂', '😊', '😎', '🤔', '😢', '😭', '👍', '👏', '🔥', '❤️', '💪', '🚀'];
+
+  // 计算后端 WebSocket 地址
+  const socketBaseUrl = useMemo(() => {
+    // 优先使用专门的 WebSocket 地址
+    const wsBase = import.meta.env.VITE_WS_BASE_URL as string | undefined;
+    if (wsBase) return wsBase;
+
+    const apiBase = import.meta.env.VITE_API_BASE_URL as string | undefined;
+    // 如果是完整地址，则取其 origin
+    if (apiBase && /^https?:\/\//i.test(apiBase)) {
+      try {
+        return new URL(apiBase).origin;
+      } catch {
+        // ignore
+      }
+    }
+
+    // 默认直接连后端服务
+    return 'http://localhost:5000';
+  }, []);
+
+  // 加载当前用户信息（用于展示自己的昵称、区分左右气泡）
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profile = await getUserProfile();
+        setCurrentUser({ _id: profile._id, username: profile.username || '我' });
+      } catch (error) {
+        console.error('获取用户信息失败', error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   // 加载项目列表（左侧联调）
   const loadProjects = async (keyword?: string) => {
@@ -43,6 +85,75 @@ const Message: React.FC = () => {
   useEffect(() => {
     loadProjects();
   }, []);
+
+  // 建立 WebSocket 连接
+  useEffect(() => {
+    const token = auth.getToken();
+    if (!token) {
+      return;
+    }
+
+    const socket = io(socketBaseUrl, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+    });
+
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log('WebSocket 已连接');
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('WebSocket 连接失败', err);
+      antdMessage.error('消息实时连接失败，请检查网络或稍后重试');
+    });
+
+    socket.on('projectMessage', (msg: LocalChatMessage) => {
+      setMessages((prev) => [...prev, msg]);
+      requestAnimationFrame(() => {
+        messageListRef.current?.scrollTo({
+          top: messageListRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [socketBaseUrl]);
+
+  // 当切换项目时，加入/离开对应的项目房间
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !selectedProjectId) return;
+
+    // 切换项目时，先加载该项目的历史消息
+    const loadHistory = async () => {
+      try {
+        const history = await fetchProjectMessages(selectedProjectId);
+        setMessages(history);
+        requestAnimationFrame(() => {
+          messageListRef.current?.scrollTo({
+            top: messageListRef.current.scrollHeight,
+            behavior: 'smooth',
+          });
+        });
+      } catch (error) {
+        console.error('加载项目历史消息失败', error);
+      }
+    };
+
+    loadHistory();
+
+    socket.emit('joinProject', selectedProjectId);
+
+    return () => {
+      socket.emit('leaveProject', selectedProjectId);
+    };
+  }, [selectedProjectId]);
 
   // 右侧 UI 展示（本地示例，不请求后端）
   const filteredMessages = useMemo(
@@ -67,16 +178,27 @@ const Message: React.FC = () => {
   const handleSend = () => {
     const text = inputValue.trim();
     if (!text || !selectedProjectId) return;
-    const newMsg: LocalChatMessage = {
-      id: `local-${Date.now()}`,
-      projectId: selectedProjectId,
-      senderId: currentUser.id,
-      senderName: currentUser.name,
-      content: text,
-      type: 'text',
-      createdAt: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, newMsg]);
+    const socket = socketRef.current;
+    if (socket && socket.connected) {
+      socket.emit('projectMessage', {
+        projectId: selectedProjectId,
+        content: text,
+        type: 'text',
+      });
+    } else {
+      // 如果 WebSocket 不可用，回退为本地消息，避免用户输入丢失
+      const fallbackMsg: LocalChatMessage = {
+        id: `local-${Date.now()}`,
+        projectId: selectedProjectId,
+        senderId: currentUser._id || 'me',
+        senderName: currentUser.username || '我',
+        content: text,
+        type: 'text',
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, fallbackMsg]);
+    }
+
     setInputValue('');
     requestAnimationFrame(() => {
       messageListRef.current?.scrollTo({ top: messageListRef.current.scrollHeight, behavior: 'smooth' });
@@ -84,7 +206,7 @@ const Message: React.FC = () => {
   };
 
   const renderBubble = (msg: LocalChatMessage) => {
-    const isMine = msg.senderId === currentUser.id;
+    const isMine = currentUser._id && msg.senderId === currentUser._id;
     return (
       <div
         key={msg.id}
@@ -104,7 +226,7 @@ const Message: React.FC = () => {
         </div>
         {isMine && (
           <Avatar size={32} className="ml-2" style={{ backgroundColor: '#1677ff' }}>
-            {currentUser.name[0]}
+            {currentUser.username[0]}
           </Avatar>
         )}
       </div>

@@ -225,7 +225,7 @@ export const Home: React.FC = () => {
             className="flex items-center justify-center mb-1 p-5"
             onClick={() => (window.location.href = '/')}
           >
-            <FrownFilled className=" text-3xl mr-3" />
+            <FrownFilled className=" text-2xl mr-3" />
             <span className="font-bold font-serif text-xl ">CollabInsight</span>
           </div>
           <Menu
