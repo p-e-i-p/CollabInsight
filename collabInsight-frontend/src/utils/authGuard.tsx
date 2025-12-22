@@ -17,7 +17,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   // 检查用户是否已登录
   const isLoggedIn = auth.isLogin();
-  const userRole = localStorage.getItem('userRole');
+  const userRole = sessionStorage.getItem('userRole');
   const currentPath = location.pathname;
 
   // 如果用户未登录，重定向到登录页

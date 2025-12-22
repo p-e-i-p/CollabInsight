@@ -286,7 +286,7 @@ const Message: React.FC = () => {
               成员 {currentProject?.members?.length || 0} 人
             </div>
           </div>
-          <Badge status="default" text="本地示例（未接实时/后端消息）" />
+          
         </header>
 
         <section
@@ -314,7 +314,7 @@ const Message: React.FC = () => {
               }
               trigger="click"
             >
-              <Button size="small">🙂 表情</Button>
+              <Button size="small">🙂 </Button>
             </Popover>
             <Select
               allowClear
@@ -327,7 +327,6 @@ const Message: React.FC = () => {
                 setInputValue((v) => `${v}@${name} `);
               }}
             />
-            <div className="text-xs text-gray-400 flex-1">仅本地示例，未接入上传/文件</div>
           </div>
           <Input.TextArea
             rows={3}

@@ -17,9 +17,9 @@ export const Login = () => {
       const res = await login(values);
       console.log('登录成功响应:', res);
       auth.setToken(res.token);
-      // 保存用户角色到localStorage
+      // 保存用户角色到sessionStorage
       if (res.userInfo && res.userInfo.role) {
-        localStorage.setItem('userRole', res.userInfo.role);
+        sessionStorage.setItem('userRole', res.userInfo.role);
         console.log('已保存用户角色:', res.userInfo.role);
         // 通知其他已打开的页面用户角色已更改
         window.dispatchEvent(new StorageEvent('storage', {

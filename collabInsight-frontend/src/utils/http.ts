@@ -18,9 +18,9 @@ declare module 'axios' {
 
 // ========================= 2. Token 存储工具 =========================
 const auth = {
-  getToken: (): string | null => localStorage.getItem('token'),
-  setToken: (token: string): void => localStorage.setItem('token', token),
-  removeToken: (): void => localStorage.removeItem('token'),
+  getToken: (): string | null => sessionStorage.getItem('token'),
+  setToken: (token: string): void => sessionStorage.setItem('token', token),
+  removeToken: (): void => sessionStorage.removeItem('token'),
   isLogin: (): boolean => !!auth.getToken(),
 };
 
@@ -60,6 +60,7 @@ service.interceptors.response.use(
       if (res.code === 401) {
         message.error('登录过期，请重新登录');
         auth.removeToken();
+        sessionStorage.removeItem('userRole');
         window.location.href = '/login';
       }
       message.error(res.msg || '请求失败');
