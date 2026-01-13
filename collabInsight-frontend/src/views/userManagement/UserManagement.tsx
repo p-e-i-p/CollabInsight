@@ -47,8 +47,10 @@ const UserManagement: React.FC = () => {
   const [searchText, setSearchText] = useState<string>('');
 
   // 检查是否是管理员
-  const [isAdmin, setIsAdmin] = useState(auth.isLogin() && localStorage.getItem('userRole') === 'admin');
-  
+  const [isAdmin, setIsAdmin] = useState(
+    auth.isLogin() && localStorage.getItem('userRole') === 'admin'
+  );
+
   // 当用户角色变化时更新isAdmin状态
   useEffect(() => {
     const updateUserRole = () => {
@@ -57,13 +59,13 @@ const UserManagement: React.FC = () => {
       setIsAdmin(loggedIn && userRole === 'admin');
       console.log(`用户角色已更新: ${userRole}, 是否是管理员: ${loggedIn && userRole === 'admin'}`);
     };
-    
+
     // 监听storage事件
     window.addEventListener('storage', updateUserRole);
-    
+
     // 监听自定义事件
     window.addEventListener('userRoleChanged', updateUserRole as EventListener);
-    
+
     // 组件卸载时移除监听器
     return () => {
       window.removeEventListener('storage', updateUserRole);
@@ -121,7 +123,7 @@ const UserManagement: React.FC = () => {
     }
 
     const filteredUsers = users.filter(
-      user =>
+      (user) =>
         user.username.toLowerCase().includes(searchText.toLowerCase()) ||
         user.email.toLowerCase().includes(searchText.toLowerCase())
     );
@@ -226,11 +228,7 @@ const UserManagement: React.FC = () => {
       render: (_, record) => (
         <Space size="middle">
           <Tooltip title="编辑">
-            <Button
-              type="link"
-              icon={<EditOutlined />}
-              onClick={() => handleEditUser(record)}
-            />
+            <Button type="link" icon={<EditOutlined />} onClick={() => handleEditUser(record)} />
           </Tooltip>
           <Tooltip title="删除">
             <Popconfirm
@@ -239,11 +237,7 @@ const UserManagement: React.FC = () => {
               okText="确定"
               cancelText="取消"
             >
-              <Button
-                type="link"
-                danger
-                icon={<DeleteOutlined />}
-              />
+              <Button type="link" danger icon={<DeleteOutlined />} />
             </Popconfirm>
           </Tooltip>
         </Space>
@@ -252,10 +246,10 @@ const UserManagement: React.FC = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className="p-2">
       <Card>
         <div className="mb-6 flex justify-between items-center">
-          <Title level={3}>人员管理</Title>
+          <Title level={2}></Title>
           <Space>
             <Input
               placeholder="搜索用户名或邮箱"
@@ -271,11 +265,7 @@ const UserManagement: React.FC = () => {
             <Button icon={<ReloadOutlined />} onClick={fetchUsers}>
               刷新
             </Button>
-            <Button
-              type="primary"
-              icon={<UserAddOutlined />}
-              onClick={handleAddUser}
-            >
+            <Button type="primary" icon={<UserAddOutlined />} onClick={handleAddUser}>
               添加用户
             </Button>
           </Space>
@@ -305,11 +295,7 @@ const UserManagement: React.FC = () => {
         footer={null}
         width={500}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             name="username"
             label="用户名"
@@ -346,11 +332,7 @@ const UserManagement: React.FC = () => {
             </Form.Item>
           )}
 
-          <Form.Item
-            name="role"
-            label="角色"
-            rules={[{ required: true, message: '请选择角色' }]}
-          >
+          <Form.Item name="role" label="角色" rules={[{ required: true, message: '请选择角色' }]}>
             <Select placeholder="请选择角色">
               <Option value="user">普通用户</Option>
               <Option value="admin">管理员</Option>

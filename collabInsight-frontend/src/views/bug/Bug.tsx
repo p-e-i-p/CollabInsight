@@ -455,7 +455,7 @@ export const Bug: React.FC = () => {
   ];
 
   return (
-    <div className="h-full w-full flex flex-col" style={{ padding: '12px' }}>
+    <div className="h-full w-full flex flex-col p-2">
       <div className="flex flex-1 overflow-hidden">
         {/* 左侧项目列表 */}
         <div className="flex-shrink-0" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -482,10 +482,9 @@ export const Bug: React.FC = () => {
                 {/* 项目信息部分 */}
 
                 {/* Bug列表部分 */}
-                <div className="flex-1 flex flex-col overflow-hidden min-h-0 mt-6">
+                <div className="flex-1 flex flex-col overflow-hidden min-h-0 mt-2">
                   {/* 搜索和操作栏 */}
                   <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                    <h3 className="text-sm font-semibold">Bug列表</h3>
                     <div className="flex items-center gap-2">
                       <Input
                         placeholder="搜索Bug名称"
@@ -547,10 +546,7 @@ export const Bug: React.FC = () => {
                   </div>
 
                   {/* 表格部分 */}
-                  <div
-                    className="flex-1 min-h-0 overflow-auto"
-                    style={{ paddingBottom: 16 }}
-                  >
+                  <div className="flex-1 min-h-0 overflow-auto">
                     <Table
                       loading={loading}
                       columns={bugColumns}
