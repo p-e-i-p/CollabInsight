@@ -5,6 +5,7 @@ import axios, {
   type Method,
   type AxiosResponse,
   type AxiosRequestHeaders,
+  type AxiosError,
 } from 'axios';
 
 // ========================= 1. 扩展 Axios 类型 =========================
@@ -14,6 +15,14 @@ declare module 'axios' {
     headers?: AxiosRequestHeaders;
     needLoading?: boolean;
   }
+}
+
+// ========================= 响应数据结构类型 =========================
+interface ApiResponse<T = any> {
+  code?: number;
+  msg?: string;
+  data?: T;
+  message?: string;
 }
 
 // ========================= 2. Token 存储工具 =========================
@@ -44,7 +53,8 @@ service.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
+    console.error('请求拦截器错误:', error);
     message.error('请求发送失败，请重试');
     return Promise.reject(error);
   }
@@ -52,41 +62,79 @@ service.interceptors.request.use(
 
 // ========================= 5. 响应拦截器（统一处理结果） =========================
 service.interceptors.response.use(
-  (response: AxiosResponse) => {
+  (response: AxiosResponse<ApiResponse>) => {
     const res = response.data;
-    console.log('HTTP响应数据:', res);
+    
+    // 开发环境下打印响应数据，便于调试
+    if (import.meta.env.DEV) {
+      console.log('HTTP响应数据:', res);
+    }
+    
     // 检查请求是否成功
-    if (res.code !== 200 && res.code !== undefined && !res.data) {
+    // 如果响应有 code 字段且不为 200，且没有 data，则视为错误
+    if (res.code !== undefined && res.code !== 200 && !res.data) {
+      // 401 未授权，需要重新登录
       if (res.code === 401) {
         message.error('登录过期，请重新登录');
         auth.removeToken();
         sessionStorage.removeItem('userRole');
         window.location.href = '/login';
+        return Promise.reject(new Error('未授权'));
       }
-      message.error(res.msg || '请求失败');
-      return Promise.reject(res);
-    } else {
-      if (response.config.showSuccessToast) {
-        message.success(res.msg || '请求成功');
-      }
-      const result = res.data || res;
+      // 其他错误
+      message.error(res.msg || res.message || '请求失败');
+      return Promise.reject(new Error(res.msg || res.message || '请求失败'));
+    }
+    
+    // 成功响应，显示成功提示（如果配置了）
+    if (response.config.showSuccessToast) {
+      message.success(res.msg || res.message || '请求成功');
+    }
+    
+    // 返回数据：优先返回 res.data，如果没有则返回整个 res
+    const result = res.data !== undefined ? res.data : res;
+    
+    if (import.meta.env.DEV) {
       console.log('HTTP响应处理后的数据:', result);
-      return result;
     }
+    
+    return result;
   },
-  (error: any) => {
-    // 如果服务器返回了错误信息，优先显示服务器返回的错误信息
-    if (error.response && error.response.data && error.response.data.message) {
-      message.error(error.response.data.message);
-    } else {
-      message.error(error.message || '服务器错误，请联系管理员');
+  (error: AxiosError<ApiResponse>) => {
+    // 网络错误或请求超时
+    if (!error.response) {
+      if (error.code === 'ECONNABORTED') {
+        message.error('请求超时，请检查网络连接');
+      } else {
+        message.error('网络错误，请检查网络连接');
+      }
+      return Promise.reject(error);
     }
+    
+    // 服务器返回了错误响应
+    const { response } = error;
+    const errorData = response.data;
+    
+    // 401 未授权
+    if (response.status === 401) {
+      message.error('登录过期，请重新登录');
+      auth.removeToken();
+      sessionStorage.removeItem('userRole');
+      window.location.href = '/login';
+      return Promise.reject(error);
+    }
+    
+    // 其他错误，优先显示服务器返回的错误信息
+    const errorMessage =
+      errorData?.message || errorData?.msg || error.message || `服务器错误 (${response.status})`;
+    message.error(errorMessage);
+    
     return Promise.reject(error);
   }
 );
 
 // ========================= 6. 封装请求函数 =========================
-type RequestOptions<T = any> = {
+interface RequestOptions<T = any> {
   url: string;
   method: Method;
   data?: T;
@@ -94,9 +142,14 @@ type RequestOptions<T = any> = {
   showSuccessToast?: boolean;
   needLoading?: boolean;
   headers?: AxiosRequestHeaders;
-};
+}
 
-const request = <T = any>(options: RequestOptions): Promise<T> => {
+/**
+ * 通用请求函数
+ * @param options 请求配置
+ * @returns Promise<T> 返回类型化的响应数据
+ */
+const request = <T = any>(options: RequestOptions<T>): Promise<T> => {
   const {
     url,
     method,
@@ -106,6 +159,7 @@ const request = <T = any>(options: RequestOptions): Promise<T> => {
     needLoading = false,
     headers,
   } = options;
+  
   return service({
     url,
     method,

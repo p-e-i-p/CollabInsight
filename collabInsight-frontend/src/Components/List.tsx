@@ -144,30 +144,40 @@ const CustomList: React.FC<CustomListProps> = ({
       }}
     >
       <AntdList.Item.Meta title={item.label} />
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-1">
+        {/* 直接显示编辑按钮，避免需要点击两次 */}
+        <Button 
+          type="text" 
+          size="small"
+          className="action-btn" 
+          onClick={(e) => {
+            e.stopPropagation();
+            onUpdate?.(item);
+          }}
+          title="编辑"
+          icon={<EditOutlined />}
+        />
         <Dropdown 
           trigger={['click']} 
-          overlay={(
-            <Menu>
-              <Menu.Item key="edit" icon={<EditOutlined />}>
-                <div onClick={(e) => {
-                  e.stopPropagation();
-                  onUpdate?.(item);
-                }}>编辑</div>
-              </Menu.Item>
-              <Menu.Item key="delete" icon={<DeleteOutlined />}>
-                <div onClick={(e) => {
-                  e.stopPropagation();
+          menu={{
+            items: [
+              {
+                key: 'delete',
+                label: '删除',
+                icon: <DeleteOutlined />,
+                onClick: (e) => {
+                  e.domEvent.stopPropagation();
                   // 直接调用删除回调函数，让父组件处理确认
                   onDelete?.(item);
-                }}>删除</div>
-              </Menu.Item>
-            </Menu>
-          )}
+                },
+              },
+            ],
+          }}
           placement="bottomRight"
         >
           <Button 
             type="text" 
+            size="small"
             className="action-btn" 
             onClick={(e) => e.stopPropagation()}
             title="更多操作"

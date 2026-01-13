@@ -285,9 +285,6 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         if (onEditProject) {
           await onEditProject(currentEditingKey, payload);
         }
-
-        // 关闭弹窗并重置状态
-        handleProjectModalCancel();
       } else {
         // 新增模式
         if (onCreateProject) {
@@ -295,17 +292,22 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         } else if (onAdd) {
           onAdd();
         }
-
-        // 关闭弹窗并重置状态
-        handleProjectModalCancel();
       }
+
+      // 成功提交后关闭弹窗并重置状态
+      handleProjectModalCancel();
     } catch (error: any) {
-      // 表单验证失败或其他错误
+      // 表单验证失败，不关闭弹窗，让用户修正错误
       if (error.errorFields) {
         console.log('表单验证失败:', error.errorFields);
-      } else {
-        console.error('提交失败:', error);
+        // 表单验证失败时不关闭弹窗
+        return;
       }
+      
+      // 其他错误（如API调用失败），也关闭弹窗
+      // 错误消息已由HTTP拦截器统一处理
+      console.error('提交失败:', error);
+      handleProjectModalCancel();
     }
   };
 
@@ -346,6 +348,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         open={isProjectModalVisible}
         onOk={handleProjectModalOk}
         onCancel={handleProjectModalCancel}
+        okText={isEditing ? '保存' : '创建'}
+        cancelText="取消"
         destroyOnClose={true}
         width={700}
         centered={true} // 添加这个属性使弹窗居中显示

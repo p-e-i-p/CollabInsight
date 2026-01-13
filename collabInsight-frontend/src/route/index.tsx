@@ -1,32 +1,17 @@
 import { createBrowserRouter } from 'react-router-dom';
-
 import { lazy } from 'react';
 import { AuthGuard } from '@/utils/authGuard';
 
-const Home = lazy(() => import('@/views/home/Home').then((mod) => ({ default: mod.default })));
-const Login = lazy(() => import('@/views/login/Login').then((mod) => ({ default: mod.default })));
-const Register = lazy(() =>
-  import('@/views/register/Register').then((mod) => ({ default: mod.default }))
-);
-const Dashboard = lazy(() =>
-  import('@/views/dashboard/Dashboard').then((mod) => ({ default: mod.default }))
-);
-const TaskCenter = lazy(() =>
-  import('@/views/center/TaskCenter').then((mod) => ({ default: mod.default }))
-);
-const Message = lazy(() =>
-  import('@/views/message/Message').then((mod) => ({ default: mod.default }))
-);
-const Bug = lazy(() => import('@/views/bug/Bug').then((mod) => ({ default: mod.default })));
-const Profile = lazy(() =>
-  import('@/views/profile/Profile').then((mod) => ({ default: mod.default }))
-);
-const UserManagement = lazy(() =>
-  import('@/views/userManagement/UserManagement').then((mod) => ({ default: mod.default }))
-);
-const NotFound = lazy(() =>
-  import('@/views/otherPage/NotFound').then((mod) => ({ default: mod.default }))
-);
+// 使用更简洁的动态import语法进行路由懒加载
+const Home = lazy(() => import('@/views/home/Home'));
+const Login = lazy(() => import('@/views/login/Login'));
+const Register = lazy(() => import('@/views/register/Register'));
+const Dashboard = lazy(() => import('@/views/dashboard/Dashboard'));
+const TaskCenter = lazy(() => import('@/views/center/TaskCenter'));
+const Message = lazy(() => import('@/views/message/Message'));
+const Bug = lazy(() => import('@/views/bug/Bug'));
+const UserManagement = lazy(() => import('@/views/userManagement/UserManagement'));
+const NotFound = lazy(() => import('@/views/otherPage/NotFound'));
 export const routes = [
   {
     path: '/login',
@@ -83,16 +68,6 @@ export const routes = [
           </AuthGuard>
         ),
         meta: { title: 'Bug管理' },
-      },
-      ,
-      {
-        path: 'profile',
-        element: (
-          <AuthGuard>
-            <Profile />
-          </AuthGuard>
-        ),
-        meta: { title: '个人中心' },
       },
       {
         path: 'user-management',

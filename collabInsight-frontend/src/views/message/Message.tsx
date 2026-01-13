@@ -31,7 +31,22 @@ const Message: React.FC = () => {
   const [messages, setMessages] = useState<LocalChatMessage[]>([]);
   const messageListRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
-  const emojiList = ['😀', '😁', '😂', '😊', '😎', '🤔', '😢', '😭', '👍', '👏', '🔥', '❤️', '💪', '🚀'];
+  const emojiList = [
+    '😀',
+    '😁',
+    '😂',
+    '😊',
+    '😎',
+    '🤔',
+    '😢',
+    '😭',
+    '👍',
+    '👏',
+    '🔥',
+    '❤️',
+    '💪',
+    '🚀',
+  ];
 
   // 计算后端 WebSocket 地址
   const socketBaseUrl = useMemo(() => {
@@ -73,7 +88,11 @@ const Message: React.FC = () => {
       setProjects(res);
       if (!selectedProjectId && res.length > 0) {
         setSelectedProjectId(res[0]._id);
-      } else if (selectedProjectId && !res.find((p) => p._id === selectedProjectId) && res.length > 0) {
+      } else if (
+        selectedProjectId &&
+        !res.find((p) => p._id === selectedProjectId) &&
+        res.length > 0
+      ) {
         setSelectedProjectId(res[0]._id);
       }
     } catch (error) {
@@ -201,23 +220,25 @@ const Message: React.FC = () => {
 
     setInputValue('');
     requestAnimationFrame(() => {
-      messageListRef.current?.scrollTo({ top: messageListRef.current.scrollHeight, behavior: 'smooth' });
+      messageListRef.current?.scrollTo({
+        top: messageListRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
     });
   };
 
   const renderBubble = (msg: LocalChatMessage) => {
     const isMine = currentUser._id && msg.senderId === currentUser._id;
     return (
-      <div
-        key={msg.id}
-        className={`flex mb-3 ${isMine ? 'justify-end' : 'justify-start'}`}
-      >
+      <div key={msg.id} className={`flex mb-3 ${isMine ? 'justify-end' : 'justify-start'}`}>
         {!isMine && (
           <Avatar size={32} className="mr-2">
             {msg.senderName[0]}
           </Avatar>
         )}
-        <div className={`max-w-[70%] rounded-lg px-3 py-2 shadow-sm ${isMine ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
+        <div
+          className={`max-w-[70%] rounded-lg px-3 py-2 shadow-sm ${isMine ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
+        >
           {!isMine && <div className="text-xs text-gray-500 mb-1">{msg.senderName}</div>}
           <div className="whitespace-pre-wrap break-words">{msg.content}</div>
           <div className="text-[10px] text-gray-400 mt-1 text-right">
@@ -252,10 +273,7 @@ const Message: React.FC = () => {
   }, [projects]);
 
   return (
-    <div
-      className="min-h-0 h-full flex gap-4 p-4 bg-gray-50"
-      style={{ overflow: 'hidden' }}
-    >
+    <div className="min-h-0 h-full flex gap-4 p-2 bg-gray-50" style={{ overflow: 'hidden' }}>
       {/* 左侧项目列表（真实接口） */}
       <div
         className="flex-shrink-0 h-full"
@@ -279,14 +297,11 @@ const Message: React.FC = () => {
       <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         <header className="p-3 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <div className="text-base font-semibold">
-              {currentProject?.name || '请选择项目'}
-            </div>
+            <div className="text-base font-semibold">{currentProject?.name || '请选择项目'}</div>
             <div className="text-xs text-gray-500">
               成员 {currentProject?.members?.length || 0} 人
             </div>
           </div>
-          
         </header>
 
         <section
@@ -302,11 +317,7 @@ const Message: React.FC = () => {
               content={
                 <div className="flex flex-wrap max-w-[220px] gap-1">
                   {emojiList.map((e) => (
-                    <Button
-                      key={e}
-                      size="small"
-                      onClick={() => setInputValue((v) => v + e)}
-                    >
+                    <Button key={e} size="small" onClick={() => setInputValue((v) => v + e)}>
                       {e}
                     </Button>
                   ))}
