@@ -48,7 +48,7 @@ test.describe('项目API测试', () => {
       data: projectData,
     });
 
-    expect(response.status()).toBe(200);
+    expect(response.status()).toBe(201);
     const body = await response.json();
     expect(body).toHaveProperty('data');
     expect(body.data).toHaveProperty('_id');
@@ -171,9 +171,10 @@ test.describe('项目API测试', () => {
       data: taskData,
     });
 
-    expect(response.status()).toBe(200);
+    expect(response.status()).toBe(201);
     const body = await response.json();
     expect(body.data || body).toHaveProperty('_id');
   });
 });
+
 

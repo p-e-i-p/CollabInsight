@@ -155,12 +155,13 @@ export const BugForm: React.FC<BugFormProps> = ({
   };
 
   return (
-
     <Modal
       title={isApproval ? '审核Bug' : (isEdit ? '编辑Bug' : '添加新Bug')}
       open={visible}
       onOk={handleOk}
       onCancel={onCancel}
+      okText="确定"
+      cancelText="取消"
       destroyOnClose={true}
       width={isApproval ? 700 : 600}
       centered={true}
