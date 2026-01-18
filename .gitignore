@@ -18,3 +18,10 @@ collabInsight-server/npm-debug.log*
 .DS_Store
 *.log
 .idea/
+
+# 测试相关
+tests/node_modules/
+tests/test-results/
+tests/playwright-report/
+tests/playwright/.cache/
+tests/screenshots/

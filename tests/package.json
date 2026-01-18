@@ -1,0 +1,23 @@
+{
+  "name": "collabinsight-tests",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Playwright tests for CollabInsight",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:login": "playwright test auth/login.spec.ts",
+    "test:login:simple": "playwright test auth/login-simple.spec.ts",
+    "test:api": "playwright test api/",
+    "test:frontend": "playwright test features/ auth/",
+    "test:all": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0"
+  }
+}
+
