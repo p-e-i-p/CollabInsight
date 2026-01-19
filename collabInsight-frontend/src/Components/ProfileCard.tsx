@@ -10,31 +10,24 @@ import { eventBus, Events } from '@/utils/eventBus';
 const { TextArea } = Input;
 
 // 表单项布局组件
-const FormItemLayout: React.FC<FormItemLayoutProps> = ({ 
-  label, 
-  colon = true, 
-  required = false, 
-  disabled = false, 
-  name, 
-  rules, 
-  input 
+const FormItemLayout: React.FC<FormItemLayoutProps> = ({
+  label,
+  colon = true,
+  required = false,
+  disabled = false,
+  name,
+  rules,
+  input,
 }) => {
   return (
     <div className="flex items-center">
       <div className={`w-16 text-left ${required ? 'text-red-500' : ''}`}>
-        {label}{colon ? '：' : ''}
+        {label}
+        {colon ? '：' : ''}
       </div>
       <div className="flex-1 ml-2">
-        <Form.Item
-          name={name}
-          rules={rules}
-          noStyle
-        >
-          {disabled ? (
-            <Input readOnly disabled />
-          ) : (
-            input
-          )}
+        <Form.Item name={name} rules={rules} noStyle>
+          {disabled ? <Input readOnly disabled /> : input}
         </Form.Item>
       </div>
     </div>
@@ -234,7 +227,7 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <div className="w-16 text-left">昵称 ：</div>
                   <div className="flex-1 ml-2">
                     <Form.Item
-                  name="nickname"
+                      name="nickname"
                       rules={[{ required: true, message: '请输入昵称' }]}
                       noStyle
                     >
@@ -251,11 +244,11 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       rules={[{ required: true, message: '请选择性别' }]}
                       noStyle
                     >
-                    <Radio.Group>
-                      <Radio value="male">男</Radio>
-                      <Radio value="female">女</Radio>
-                      <Radio value="other">其他</Radio>
-                    </Radio.Group>
+                      <Radio.Group>
+                        <Radio value="male">男</Radio>
+                        <Radio value="female">女</Radio>
+                        <Radio value="other">其他</Radio>
+                      </Radio.Group>
                     </Form.Item>
                   </div>
                 </div>
@@ -268,13 +261,13 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       rules={[{ max: 200, message: '个人简介不能超过200个字符' }]}
                       noStyle
                     >
-                    <TextArea 
-                      placeholder="请输入个人简介" 
-                      rows={4} 
-                      showCount 
-                      maxLength={200} 
+                      <TextArea
+                        placeholder="请输入个人简介"
+                        rows={4}
+                        showCount
+                        maxLength={200}
                         className="w-full"
-                />
+                      />
                     </Form.Item>
                   </div>
                 </div>

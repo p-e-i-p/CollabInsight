@@ -64,12 +64,7 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
     const res = response.data;
-    
-    // 开发环境下打印响应数据，便于调试
-    if (import.meta.env.DEV) {
-      console.log('HTTP响应数据:', res);
-    }
-    
+
     // 检查请求是否成功
     // 如果响应有 code 字段且不为 200，且没有 data，则视为错误
     if (res.code !== undefined && res.code !== 200 && !res.data) {
@@ -85,19 +80,15 @@ service.interceptors.response.use(
       message.error(res.msg || res.message || '请求失败');
       return Promise.reject(new Error(res.msg || res.message || '请求失败'));
     }
-    
+
     // 成功响应，显示成功提示（如果配置了）
     if (response.config.showSuccessToast) {
       message.success(res.msg || res.message || '请求成功');
     }
-    
+
     // 返回数据：优先返回 res.data，如果没有则返回整个 res
     const result = res.data !== undefined ? res.data : res;
-    
-    if (import.meta.env.DEV) {
-      console.log('HTTP响应处理后的数据:', result);
-    }
-    
+
     return result;
   },
   (error: AxiosError<ApiResponse>) => {
@@ -110,11 +101,11 @@ service.interceptors.response.use(
       }
       return Promise.reject(error);
     }
-    
+
     // 服务器返回了错误响应
     const { response } = error;
     const errorData = response.data;
-    
+
     // 401 未授权
     if (response.status === 401) {
       message.error('登录过期，请重新登录');
@@ -123,12 +114,12 @@ service.interceptors.response.use(
       window.location.href = '/login';
       return Promise.reject(error);
     }
-    
+
     // 其他错误，优先显示服务器返回的错误信息
     const errorMessage =
       errorData?.message || errorData?.msg || error.message || `服务器错误 (${response.status})`;
     message.error(errorMessage);
-    
+
     return Promise.reject(error);
   }
 );
@@ -159,7 +150,7 @@ const request = <T = any>(options: RequestOptions<T>): Promise<T> => {
     needLoading = false,
     headers,
   } = options;
-  
+
   return service({
     url,
     method,

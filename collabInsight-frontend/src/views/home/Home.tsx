@@ -58,7 +58,6 @@ export const Home: React.FC = () => {
         );
         // 保存用户角色到localStorage
         localStorage.setItem('userRole', profile.role);
-        console.log('用户角色:', profile.role);
         // 生成菜单项
         setMenuItems(generateMenuItems());
       } catch (error) {

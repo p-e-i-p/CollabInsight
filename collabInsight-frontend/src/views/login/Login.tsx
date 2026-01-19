@@ -11,7 +11,6 @@ export const Login = () => {
   const navigate = useNavigate();
   const [loading, setloading] = useState(false);
   const handelLogin = async (values: LoginParams) => {
-    console.log(values);
     try {
       setloading(true);
       const res = await login(values);
@@ -32,7 +31,6 @@ export const Login = () => {
           detail: { role: res.userInfo.role }
         }));
       }
-      console.log('准备跳转到首页');
       navigate('/');
     } catch (error: any) {
       console.error('登录失败:', error);

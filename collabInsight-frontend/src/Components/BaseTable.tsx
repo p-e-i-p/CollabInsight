@@ -215,13 +215,7 @@ const BaseTable = <
 
       {/* 表格区域 */}
       <Spin spinning={loading} tip={loadingText}>
-        <Table
-          dataSource={data}
-          columns={columns}
-          pagination={false}
-          bordered
-          className="w-full"
-        />
+        <Table dataSource={data} columns={columns} pagination={false} bordered className="w-full" />
         {data.length === 0 && !loading ? <Empty description={emptyText} className="mt-8" /> : null}
       </Spin>
 

@@ -333,9 +333,6 @@ export const ProjectList: React.FC<ProjectListProps> = ({
           });
         }}
         onSearch={onSearch}
-        onPageChange={(page, pageSize) => {
-          console.log(`切换到第 ${page} 页，每页 ${pageSize} 条`);
-        }}
         onAddTask={(item) => {
           showTaskModal(item.key);
         }}

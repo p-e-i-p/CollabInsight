@@ -18,8 +18,6 @@ export const menuItems: MenuItem[] = [];
 export const generateMenuItems = (): MenuItem[] => {
   const userRole = localStorage.getItem('userRole');
   const isAdmin = userRole === 'admin';
-  console.log('用户角色:', userRole, '是否管理员:', isAdmin);
-  
   // 如果用户角色不存在，默认为普通用户
   const finalUserRole = userRole || 'user';
   
