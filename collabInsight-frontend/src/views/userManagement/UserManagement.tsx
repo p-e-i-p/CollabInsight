@@ -248,7 +248,7 @@ const UserManagement: React.FC = () => {
   return (
     <div className="p-2">
       <Card>
-        <div className="mb-6 flex justify-between items-center">
+        <div className=" flex justify-between items-center">
           <Title level={2}></Title>
           <Space>
             <Input
@@ -280,11 +280,12 @@ const UserManagement: React.FC = () => {
             emptyText: '暂无用户数据，请点击"添加用户"按钮创建新用户',
           }}
           pagination={{
-            pageSize: 10,
+            pageSize: 5,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,
           }}
+          className="p-2"
         />
       </Card>
 

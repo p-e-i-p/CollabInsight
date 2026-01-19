@@ -48,7 +48,7 @@ export const updateProject = (projectId: string, data: {
   deadline?: string;
   memberIds?: string[];
 }) => {
-  return http.put<Project>(`/api/projects/${projectId}`, data, { showSuccessToast: true });
+  return http.put<Project>(`/api/projects/${projectId}`, data, { showSuccessToast: false });
 };
 
 export const deleteProject = (projectId: string) => {

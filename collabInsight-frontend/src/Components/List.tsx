@@ -1,4 +1,11 @@
-import { List as AntdList, Button, Pagination, Dropdown, Menu, type ListProps as AntdListProps } from 'antd';
+import {
+  List as AntdList,
+  Button,
+  Pagination,
+  Dropdown,
+  Menu,
+  type ListProps as AntdListProps,
+} from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined, MoreOutlined } from '@ant-design/icons';
 import Search from 'antd/es/input/Search';
 import React, { useState, useEffect } from 'react';
@@ -145,11 +152,10 @@ const CustomList: React.FC<CustomListProps> = ({
     >
       <AntdList.Item.Meta title={item.label} />
       <div className="flex justify-end gap-1">
-        {/* 直接显示编辑按钮，避免需要点击两次 */}
-        <Button 
-          type="text" 
+        <Button
+          type="text"
           size="small"
-          className="action-btn" 
+          className="action-btn "
           onClick={(e) => {
             e.stopPropagation();
             onUpdate?.(item);
@@ -157,8 +163,8 @@ const CustomList: React.FC<CustomListProps> = ({
           title="编辑"
           icon={<EditOutlined />}
         />
-        <Dropdown 
-          trigger={['click']} 
+        <Dropdown
+          trigger={['click']}
           menu={{
             items: [
               {
@@ -175,10 +181,10 @@ const CustomList: React.FC<CustomListProps> = ({
           }}
           placement="bottomRight"
         >
-          <Button 
-            type="text" 
+          <Button
+            type="text"
             size="small"
-            className="action-btn" 
+            className="action-btn"
             onClick={(e) => e.stopPropagation()}
             title="更多操作"
           >
@@ -200,12 +206,12 @@ const CustomList: React.FC<CustomListProps> = ({
       }}
     >
       {/* 1. 标题区域 */}
-      <div className="px-3 py-1.25 border-b border-gray-200">
+      <div className="px-3 py-1.5 border-b border-gray-200">
         <h3 className="text-sm font-semibold text-center">{title}</h3>
       </div>
 
       {/* 2. 操作区域 - 搜索框 + 新增按钮（右对齐） */}
-      <div className="px-3 py-1.25 border-gray-200 flex justify-end items-center gap-1.25 mt-2.5 mb-2.5">
+      <div className="px-1 py-1.25 border-gray-200 flex justify-end items-center gap-1.25 mt-2.5 mb-2.5">
         <Search
           placeholder="搜索"
           allowClear
@@ -215,7 +221,7 @@ const CustomList: React.FC<CustomListProps> = ({
           style={{ width: 304 }}
         />
         <PlusOutlined
-          className="text-blue-600 cursor-pointer text-base hover:text-blue-700 transition-colors"
+          className=" cursor-pointer text-base hover:text-blue-700 transition-colors ml-2"
           onClick={onAdd}
           title="新增"
           aria-label="新增"

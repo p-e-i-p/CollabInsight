@@ -7,7 +7,7 @@ import {PageLoading} from './components/loading/PageLoading';
 // 自定义 Ant Design 主题
 const antdTheme = {
   token: {
-    colorPrimary: '#6C70E6',
+    colorPrimary: '#6c70e6',
   },
 };
 export const App = () => {

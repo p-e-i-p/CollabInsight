@@ -453,7 +453,7 @@ router.delete('/users/:id', protect, admin, async (req, res) => {
       return res.status(404).json({ message: '用户不存在' });
     }
 
-    await user.remove();
+    await User.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       code: 200,

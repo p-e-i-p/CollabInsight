@@ -22,7 +22,7 @@ router.get('/overview', protect, async (req, res) => {
     const projects = await Project.find({
       $or: [{ leader: userId }, { members: userId }],
     })
-      .select('_id name status priority deadline members createdAt')
+      .select('_id name status priority deadline leader members createdAt')
       .lean();
 
     if (!projects.length) {
