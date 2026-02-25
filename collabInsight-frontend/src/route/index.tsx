@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { lazy } from 'react';
 import { AuthGuard } from '@/utils/authGuard';
 
-// 使用更简洁的动态import语法进行路由懒加载
+// 路由懒加载
 const Home = lazy(() => import('@/views/home/Home'));
 const Login = lazy(() => import('@/views/login/Login'));
 const Register = lazy(() => import('@/views/register/Register'));

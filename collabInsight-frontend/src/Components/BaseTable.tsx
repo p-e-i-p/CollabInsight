@@ -1,4 +1,3 @@
-// src/components/BaseTable/index.tsx
 import {
   Table,
   Pagination,
@@ -13,7 +12,7 @@ import { SearchOutlined, RestOutlined, FilterOutlined } from '@ant-design/icons'
 import React, { useEffect, useState, useRef } from 'react';
 import type { FormProps } from 'antd/es/form';
 
-// 分页参数
+// 分页
 export interface BaseTablePagination {
   current: number;
   pageSize: number;
@@ -25,11 +24,11 @@ export interface BaseTablePagination {
 // 过滤表单字段类型（泛型约束）
 export type FilterFormValues = Record<string, any>;
 
-// 过滤表单配置项（扩展 AntD Form Item 配置）
+// 过滤表单配置项扩展 AntD Form Item 配置
 export interface FilterFormItem {
-  name: string; // 字段名（对应 FormValues 的 key）
+  name: string; // FormValues 的 key
   label?: React.ReactNode; // 标签
-  component: React.ReactNode; // 表单组件（如 Input、Select 等）
+  component: React.ReactNode; // 表单组件
   rules?: FormProps[]; // 校验规则
   wrapperCol?: { span: number }; // 布局占比
   labelCol?: { span: number }; // 标签占比
@@ -50,8 +49,7 @@ export interface BaseTableProps<T, F extends FilterFormValues = FilterFormValues
   emptyText?: string;
   className?: string;
   style?: React.CSSProperties;
-
-  // 过滤相关配置（新增）
+  // 过滤相关配置
   filterFormItems?: FilterFormItem[]; // 过滤表单配置
   filterFormLayout?: 'horizontal' | 'vertical'; // 过滤表单布局
   filterFormProps?: FormProps<F>; // 额外的 Form 属性

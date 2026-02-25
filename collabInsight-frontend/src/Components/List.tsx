@@ -39,8 +39,6 @@ export interface CustomListProps {
   defaultSelectedKey?: string;
   /** 列表额外样式类 */
   listClassName?: string;
-  /** 搜索框宽度（默认200px） */
-
   /** 组件宽度（默认250px） */
   width?: number;
   /** 组件高度（默认100%，便于父元素 h-full 填充） */
@@ -173,7 +171,6 @@ const CustomList: React.FC<CustomListProps> = ({
                 icon: <DeleteOutlined />,
                 onClick: (e) => {
                   e.domEvent.stopPropagation();
-                  // 直接调用删除回调函数，让父组件处理确认
                   onDelete?.(item);
                 },
               },
@@ -210,7 +207,7 @@ const CustomList: React.FC<CustomListProps> = ({
         <h3 className="text-sm font-semibold text-center">{title}</h3>
       </div>
 
-      {/* 2. 操作区域 - 搜索框 + 新增按钮（右对齐） */}
+      {/* 2. 操作区域 - 搜索框 + 新增按钮 */}
       <div className="px-1 py-1.25 border-gray-200 flex justify-end items-center gap-1.25 mt-2.5 mb-2.5">
         <Search
           placeholder="搜索"
@@ -243,11 +240,11 @@ const CustomList: React.FC<CustomListProps> = ({
       <footer className="p-3  border-gray-200 flex justify-end">
         <Pagination
           simple
-          current={currentPage} // 绑定当前页状态
-          pageSize={pageSize} // 绑定每页条数
-          total={total} // 总数据量（从完整数据长度获取）
-          onChange={handlePaginationChange} // 分页切换事件
-          showSizeChanger={false} // 隐藏每页条数切换（如需显示可改为true）
+          current={currentPage}
+          pageSize={pageSize}
+          total={total}
+          onChange={handlePaginationChange}
+          showSizeChanger={false}
           aria-label="分页控件"
           size="small"
         />

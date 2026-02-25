@@ -5,7 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { ProjectList } from '@/Components/ProjectList';
 import BugForm from './BugForm';
-import type { Project, Bug as BugItem } from '@/types/bug';
+import type { Project, Bug as BugItem } from '@/request/api/bug/bug';
 import {
   fetchBugsByProject,
   createBug,

@@ -12,8 +12,8 @@ export const PageLoading = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(255, 255, 255, 0.8)', // 半透明背景，提升视觉层次
-        zIndex: 9999, // 确保在最上层
+        background: 'rgba(255, 255, 255, 0.8)',
+        zIndex: 9999,
       }}
     >
       <Spin size="large" />

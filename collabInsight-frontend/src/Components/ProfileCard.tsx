@@ -46,7 +46,6 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   // 更新Header头像的函数
   const updateHeaderAvatar = (avatarUrl: string) => {
-    // 触发头像更新事件，通知Home组件更新头像
     eventBus.emit(Events.USER_AVATAR_UPDATED, avatarUrl);
   };
 
@@ -77,8 +76,6 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const handleFinish = async (values: UpdateProfileParams) => {
     try {
       await updateUserProfile(values);
-      // HTTP拦截器已经显示了成功消息，这里不需要再显示
-      // 重新获取用户信息以刷新显示
       const profile = await getUserProfile();
       form.setFieldsValue({
         _id: profile._id,
@@ -90,13 +87,10 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
       // 触发用户信息更新事件
       eventBus.emit(Events.USER_PROFILE_UPDATED);
-
-      // 关闭个人中心页面
       setTimeout(() => {
         onClose();
-      }, 1000); // 延迟1秒关闭，让用户看到成功消息
+      }, 500);
     } catch (error) {
-      // 错误消息由HTTP拦截器统一处理，这里不需要再显示
       console.error('更新个人信息失败:', error);
     }
   };
@@ -155,15 +149,12 @@ const ProfileCard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         bio: profile.bio,
         avatar: profile.avatar,
       });
-
-      // HTTP拦截器已经显示了成功消息，这里不需要再显示
       setAvatarFileList([]);
       setAvatarModalVisible(false);
 
       // 更新Header中的头像
       updateHeaderAvatar(form.getFieldValue('avatar'));
     } catch (error: any) {
-      // 错误消息由HTTP拦截器统一处理，这里不需要再显示
       console.error('头像上传失败:', error);
     } finally {
       setUploadLoading(false);

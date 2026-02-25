@@ -1,6 +1,5 @@
-
 import { http } from '@/utils/http';
-import type { Bug } from '@/types/bug';
+import type { Bug } from '@/request/type';
 
 export const fetchBugsByProject = (projectId: string) => {
   return http.get<Bug[]>(`/api/bugs/${projectId}`);
@@ -18,7 +17,10 @@ export const deleteBug = (bugId: string) => {
   return http.delete(`/api/bugs/${bugId}`, undefined, { showSuccessToast: true });
 };
 
-export const approveBug = (bugId: string, data: { approvalStatus: '通过' | '不通过'; reviewComment?: string }) => {
+export const approveBug = (
+  bugId: string,
+  data: { approvalStatus: '通过' | '不通过'; reviewComment?: string }
+) => {
   return http.post<Bug>(`/api/bugs/${bugId}/approve`, data, { showSuccessToast: true });
 };
 

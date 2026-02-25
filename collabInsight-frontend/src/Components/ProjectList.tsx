@@ -125,26 +125,22 @@ export const ProjectList: React.FC<ProjectListProps> = ({
       // 预填成员选项，确保已有成员展示为可删除标签
       const memberOpts = (editingProject.members || []).map((m: any) => {
         const value = typeof m === 'string' ? m : m._id || m;
-        const label = typeof m === 'string' ? m : (m.username || m._id || m);
+        const label = typeof m === 'string' ? m : m.username || m._id || m;
         return { label, value };
       });
       setMemberOptions(memberOpts);
 
       // 处理日期范围：如果有截止日期，使用它作为结束日期
-      const deadlineDate = editingProject.deadline 
-        ? dayjs(editingProject.deadline) 
-        : null;
-      
+      const deadlineDate = editingProject.deadline ? dayjs(editingProject.deadline) : null;
+
       projectForm.setFieldsValue({
         projectName: editingProject.projectName,
         projectDesc: editingProject.projectDesc || '',
         status: editingProject.status || '未开始',
         priority: editingProject.priority || '普通',
-        dateRange: deadlineDate 
-          ? [deadlineDate, deadlineDate] 
-          : null,
+        dateRange: deadlineDate ? [deadlineDate, deadlineDate] : null,
         members: (editingProject.members || []).map((m: any) =>
-          typeof m === 'string' ? m : (m._id || m)
+          typeof m === 'string' ? m : m._id || m
         ),
       });
     } else if (isProjectModalVisible && !isEditing) {
@@ -179,26 +175,24 @@ export const ProjectList: React.FC<ProjectListProps> = ({
 
   const handleSearchMember = async (keyword: string) => {
     if (!onSearchMember) return;
-    
+
     try {
       setMemberLoading(true);
-      // 即使关键词为空，也调用API获取所有用户
       const searchKeyword = keyword ? keyword.trim() : '';
       const list = await onSearchMember(searchKeyword);
-      
-      // 确保返回的是数组
+
       const userList = Array.isArray(list) ? list : [];
-      
+
       const options = userList.map((u: any) => ({
         label: `${u.username || u._id} (${u.role === 'admin' ? '组长' : '成员'})`,
         value: u._id,
       }));
-      
+
       // 合并搜索结果和已有成员（编辑模式）
       if (isEditing && editingProject) {
         const existingMembers = (editingProject.members || []).map((m: any) => {
           const value = typeof m === 'string' ? m : m._id || m;
-          const label = typeof m === 'string' ? m : (m.username || m._id || m);
+          const label = typeof m === 'string' ? m : m.username || m._id || m;
           return { label, value };
         });
         // 合并并去重，确保已有成员也在列表中
@@ -218,7 +212,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
       if (isEditing && editingProject) {
         const existingMembers = (editingProject.members || []).map((m: any) => {
           const value = typeof m === 'string' ? m : m._id || m;
-          const label = typeof m === 'string' ? m : (m.username || m._id || m);
+          const label = typeof m === 'string' ? m : m.username || m._id || m;
           return { label, value };
         });
         setMemberOptions(existingMembers);
@@ -274,7 +268,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         projectDesc: values.projectDesc || '',
         status: values.status || '未开始',
         priority: values.priority || '普通',
-        deadline: deadline || undefined, // 如果没有设置日期，传undefined而不是空字符串
+        deadline: deadline || undefined,
         tasks: [],
         members: values.members || [],
       };
@@ -297,15 +291,10 @@ export const ProjectList: React.FC<ProjectListProps> = ({
       // 成功提交后关闭弹窗并重置状态
       handleProjectModalCancel();
     } catch (error: any) {
-      // 表单验证失败，不关闭弹窗，让用户修正错误
       if (error.errorFields) {
         console.log('表单验证失败:', error.errorFields);
-        // 表单验证失败时不关闭弹窗
         return;
       }
-      
-      // 其他错误（如API调用失败），也关闭弹窗
-      // 错误消息已由HTTP拦截器统一处理
       console.error('提交失败:', error);
       handleProjectModalCancel();
     }
@@ -321,7 +310,6 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         onAdd={showProjectModal}
         onUpdate={handleUpdate}
         onDelete={(item) => {
-          // 触发删除确认
           Modal.confirm({
             title: '确认删除',
             content: `确定要删除项目"${item.label}"吗？此操作不可恢复。`,
@@ -423,7 +411,6 @@ export const ProjectList: React.FC<ProjectListProps> = ({
               options={memberOptions}
               onSearch={handleSearchMember}
               onFocus={() => {
-                // 当选择框聚焦时，如果没有选项，自动加载所有用户
                 if (memberOptions.length === 0) {
                   handleSearchMember('');
                 }
@@ -431,7 +418,6 @@ export const ProjectList: React.FC<ProjectListProps> = ({
               allowClear
               size="middle"
               style={{ borderRadius: 6 }}
-              // 让已选成员以标签形式展示，可点击 × 移除
               maxTagCount="responsive"
             />
           </Form.Item>
