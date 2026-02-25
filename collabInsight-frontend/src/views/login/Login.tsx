@@ -71,8 +71,12 @@ export const Login = () => {
           </FormItem>
         </Form>
 
-        <div className="justify-center item-center  mt-3 flex">
-          <Button type="link" className="color-indigo-500">
+        <div className="justify-center item-center  mt-3 flex gap-4">
+          <Button
+            type="link"
+            className="color-indigo-500"
+            onClick={() => message.info('如需找回密码，请联系管理员')}
+          >
             忘记密码
           </Button>
           <Button type="link" onClick={() => navigate('/register')}>
